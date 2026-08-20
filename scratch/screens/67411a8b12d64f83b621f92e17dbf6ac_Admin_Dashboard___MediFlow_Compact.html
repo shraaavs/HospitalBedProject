@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MediFlow Central - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .capacity-bar-segment {
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        /* Custom scrollbar for data-heavy views */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #cbd5e1;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#f7f9fb",
+                        "tertiary-fixed": "#d3e4fe",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#d6e3ff",
+                        "secondary-fixed-dim": "#81cfff",
+                        "tertiary-container": "#506076",
+                        "tertiary-fixed-dim": "#b7c8e1",
+                        "surface-container-highest": "#e0e3e5",
+                        "inverse-primary": "#a9c7ff",
+                        "outline-variant": "#c2c6d4",
+                        "on-primary-container": "#c8daff",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed-variant": "#00468c",
+                        "error": "#ba1a1a",
+                        "primary": "#00478d",
+                        "secondary": "#00658d",
+                        "inverse-surface": "#2d3133",
+                        "outline": "#727783",
+                        "surface-container-high": "#e6e8ea",
+                        "surface-container-low": "#f2f4f6",
+                        "surface-bright": "#f7f9fb",
+                        "tertiary": "#39485e",
+                        "surface-container": "#eceef0",
+                        "on-background": "#191c1e",
+                        "on-secondary-fixed": "#001e2d",
+                        "secondary-container": "#41befd",
+                        "primary-container": "#005eb8",
+                        "on-primary-fixed": "#001b3d",
+                        "on-secondary": "#ffffff",
+                        "surface-variant": "#e0e3e5",
+                        "primary-fixed-dim": "#a9c7ff",
+                        "on-surface": "#191c1e",
+                        "on-secondary-fixed-variant": "#004c6b",
+                        "secondary-fixed": "#c6e7ff",
+                        "surface-tint": "#005db6",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-secondary-container": "#004b69",
+                        "background": "#f7f9fb",
+                        "surface-dim": "#d8dadc",
+                        "on-tertiary-container": "#cadbf5",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#38485d",
+                        "on-surface-variant": "#424752"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sm": "12px",
+                        "xl": "32px",
+                        "xs": "8px",
+                        "lg": "24px",
+                        "gutter": "20px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "32px",
+                        "md": "16px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "data-mono": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "display-lg": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen">
+<!-- SideNavBar Shell -->
+<aside class="flex flex-col h-screen fixed left-0 top-0 z-40 docked left-0 h-full w-64 bg-surface-container shadow-sm">
+<div class="px-lg py-xl flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-3xl" data-weight="fill">local_hospital</span>
+<div>
+<h1 class="text-headline-md font-headline-md font-bold text-primary">MediFlow</h1>
+<p class="text-label-md font-label-md text-on-surface-variant">Staff Portal</p>
+</div>
+</div>
+<nav class="flex-1 px-md space-y-base">
+<!-- Active Tab: Dashboard -->
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-primary font-bold border-r-4 border-primary bg-primary-container/10 transition-all duration-200 scale-0.98x" href="#">
+<span class="material-symbols-outlined" data-weight="fill">dashboard</span>
+<span class="text-body-md font-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-primary-container/10 transition-colors" href="#">
+<span class="material-symbols-outlined">bed</span>
+<span class="text-body-md font-body-md">Bed Management</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-primary-container/10 transition-colors" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="text-body-md font-body-md">Resource Allocation</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-primary-container/10 transition-colors" href="#">
+<span class="material-symbols-outlined">person_search</span>
+<span class="text-body-md font-body-md">Patient Registry</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-primary-container/10 transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-body-md font-body-md">Staff Management</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-primary-container/10 transition-colors" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-body-md font-body-md">Reports</span>
+</a>
+</nav>
+<div class="p-lg border-t border-outline-variant">
+<div class="flex items-center gap-sm">
+<img class="w-10 h-10 rounded-full border-2 border-primary-fixed" data-alt="A professional headshot of a female hospital administrator with a calm and confident expression, wearing a navy blue blazer and clinical lanyard. The background is a soft-focus modern hospital hallway with clean, clinical white walls and soft blue lighting. High-end professional portrait photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6xHKfUTyQJbu4D3DFd3N-HRrX_In8j8IBqP0ZbIrf7RDKDfJatxnI-h2uoRtBr7zDHxpnGhhLhLi7tq4p-fr4pGDogUJXd9XxMSY3QUkm-uDaLqSp_pvtLQ8uLWn58FsKLoaox_3b_QvtCc6hsIjQeZYoj39oWc2uT7kRW_Q2YcvpyxZxGEmEg7O6fBljfKXHiUBMyOIHQ9OAKpXkc22desDA8ucE4Orn6DvEEio6eOPNBvB1urzrs5aBHB0Zwp-q9zf2Isy1wsWH"/>
+<div class="overflow-hidden">
+<p class="text-body-sm font-bold truncate">Dr. Sarah Chen</p>
+<p class="text-label-md text-on-surface-variant">Chief Coordinator</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar Shell -->
+<header class="flex justify-between items-center w-full px-lg py-sm pl-72 pr-margin-desktop fixed top-0 z-30 bg-surface shadow-sm docked top-0 w-full">
+<div class="flex items-center gap-md flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-full pl-xl pr-md py-xs text-body-md focus:ring-2 focus:ring-primary/20" placeholder="Search patients, beds, or staff..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-lg">
+<div class="flex items-center gap-sm">
+<button class="relative p-xs text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-xs text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<div class="h-8 w-[1px] bg-outline-variant"></div>
+<div class="flex flex-col items-end">
+<span class="text-label-md font-bold text-primary">MediFlow Central</span>
+<span class="text-[10px] text-on-surface-variant">LIVE v2.4.0</span>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-64 pt-24 px-margin-desktop pb-xl min-h-screen">
+<!-- Header Section -->
+<header class="mb-lg flex justify-between items-end">
+<div>
+<h2 class="text-display-lg font-display-lg text-on-surface">Dashboard</h2>
+<p class="text-body-lg text-on-surface-variant">System-wide resource overview and real-time status.</p>
+</div>
+<div class="flex gap-sm">
+<button class="flex items-center gap-xs px-md py-xs border border-primary text-primary rounded-lg text-label-md hover:bg-primary/5 transition-colors">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                    Export PDF
+                </button>
+<button class="flex items-center gap-xs px-md py-xs bg-primary text-on-primary rounded-lg text-label-md hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                    Admission
+                </button>
+</div>
+</header>
+<!-- Quick Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-lg mb-xl">
+<div class="bg-surface-container-lowest p-lg rounded-xl shadow-sm border border-outline-variant hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-sm">
+<div class="p-xs bg-primary/10 rounded-lg">
+<span class="material-symbols-outlined text-primary">bed</span>
+</div>
+<span class="text-label-md text-error font-bold">+2% from avg</span>
+</div>
+<h3 class="text-label-md text-on-surface-variant uppercase tracking-wider mb-xs">Total Beds</h3>
+<p class="text-headline-lg font-headline-lg text-on-surface">450</p>
+<div class="mt-md w-full bg-surface-container rounded-full h-2">
+<div class="bg-primary h-2 rounded-full" style="width: 85%"></div>
+</div>
+<p class="text-body-sm text-on-surface-variant mt-sm">85% Occupied</p>
+</div>
+<div class="bg-surface-container-lowest p-lg rounded-xl shadow-sm border border-outline-variant hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-sm">
+<div class="p-xs bg-secondary/10 rounded-lg">
+<span class="material-symbols-outlined text-secondary">monitor_heart</span>
+</div>
+<span class="text-label-md text-secondary font-bold">Stable</span>
+</div>
+<h3 class="text-label-md text-on-surface-variant uppercase tracking-wider mb-xs">ICU Availability</h3>
+<p class="text-headline-lg font-headline-lg text-on-surface">12/40</p>
+<div class="mt-md flex gap-1 h-2">
+<div class="bg-error rounded-full flex-grow" style="flex-basis: 70%"></div>
+<div class="bg-surface-container rounded-full flex-grow" style="flex-basis: 30%"></div>
+</div>
+<p class="text-body-sm text-on-surface-variant mt-sm">30% Available</p>
+</div>
+<div class="bg-error-container p-lg rounded-xl shadow-sm border border-error/20 hover:shadow-md transition-shadow animate-pulse">
+<div class="flex justify-between items-start mb-sm">
+<div class="p-xs bg-error/20 rounded-lg">
+<span class="material-symbols-outlined text-error" data-weight="fill">emergency</span>
+</div>
+<span class="text-label-md text-error font-extrabold">URGENT</span>
+</div>
+<h3 class="text-label-md text-on-error-container uppercase tracking-wider mb-xs">Emergency Requests</h3>
+<p class="text-headline-lg font-headline-lg text-on-error-container">3 Active</p>
+<p class="text-body-sm text-on-error-container/80 mt-sm">Awaiting triage assignment</p>
+</div>
+<div class="bg-surface-container-lowest p-lg rounded-xl shadow-sm border border-outline-variant hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-sm">
+<div class="p-xs bg-tertiary/10 rounded-lg">
+<span class="material-symbols-outlined text-tertiary">badge</span>
+</div>
+<span class="text-label-md text-tertiary font-bold">Full Shift</span>
+</div>
+<h3 class="text-label-md text-on-surface-variant uppercase tracking-wider mb-xs">Staff on Duty</h3>
+<p class="text-headline-lg font-headline-lg text-on-surface">124</p>
+<p class="text-body-sm text-on-surface-variant mt-sm">18 Physicians, 82 Nurses, 24 Support</p>
+</div>
+</div>
+<!-- Bento Grid Main Content -->
+<div class="grid grid-cols-12 gap-lg items-start">
+<!-- Real-Time Bed Status Chart (Left Column) -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant p-lg">
+<div class="flex justify-between items-center mb-xl">
+<h3 class="text-headline-md font-headline-md">Bed Capacity by Ward</h3>
+<div class="flex items-center gap-md">
+<div class="flex items-center gap-xs">
+<span class="w-3 h-3 rounded-full bg-error"></span>
+<span class="text-label-md">Occupied</span>
+</div>
+<div class="flex items-center gap-xs">
+<span class="w-3 h-3 rounded-full bg-secondary-container"></span>
+<span class="text-label-md">Cleaning</span>
+</div>
+<div class="flex items-center gap-xs">
+<span class="w-3 h-3 rounded-full bg-[#10b981]"></span>
+<span class="text-label-md">Available</span>
+</div>
+</div>
+</div>
+<div class="space-y-xl">
+<!-- General Ward -->
+<div class="space-y-sm">
+<div class="flex justify-between items-end">
+<span class="text-body-md font-bold">General Ward (A-D)</span>
+<span class="text-body-sm text-on-surface-variant">210 / 250 Beds</span>
+</div>
+<div class="flex h-6 rounded-lg overflow-hidden bg-surface-container shadow-inner">
+<div class="bg-error capacity-bar-segment" style="width: 80%"></div>
+<div class="bg-secondary-container capacity-bar-segment" style="width: 12%"></div>
+<div class="bg-[#10b981] capacity-bar-segment" style="width: 8%"></div>
+</div>
+</div>
+<!-- ICU -->
+<div class="space-y-sm">
+<div class="flex justify-between items-end">
+<span class="text-body-md font-bold">Intensive Care Unit (ICU)</span>
+<span class="text-body-sm text-on-surface-variant">28 / 40 Beds</span>
+</div>
+<div class="flex h-6 rounded-lg overflow-hidden bg-surface-container shadow-inner">
+<div class="bg-error capacity-bar-segment" style="width: 70%"></div>
+<div class="bg-secondary-container capacity-bar-segment" style="width: 10%"></div>
+<div class="bg-[#10b981] capacity-bar-segment" style="width: 20%"></div>
+</div>
+</div>
+<!-- Pediatric -->
+<div class="space-y-sm">
+<div class="flex justify-between items-end">
+<span class="text-body-md font-bold">Pediatric Ward</span>
+<span class="text-body-sm text-on-surface-variant">45 / 60 Beds</span>
+</div>
+<div class="flex h-6 rounded-lg overflow-hidden bg-surface-container shadow-inner">
+<div class="bg-error capacity-bar-segment" style="width: 75%"></div>
+<div class="bg-secondary-container capacity-bar-segment" style="width: 5%"></div>
+<div class="bg-[#10b981] capacity-bar-segment" style="width: 20%"></div>
+</div>
+</div>
+<!-- Isolation -->
+<div class="space-y-sm">
+<div class="flex justify-between items-end">
+<span class="text-body-md font-bold">Isolation Units</span>
+<span class="text-body-sm text-on-surface-variant">95 / 100 Beds</span>
+</div>
+<div class="flex h-6 rounded-lg overflow-hidden bg-surface-container shadow-inner">
+<div class="bg-error capacity-bar-segment" style="width: 95%"></div>
+<div class="bg-secondary-container capacity-bar-segment" style="width: 2%"></div>
+<div class="bg-[#10b981] capacity-bar-segment" style="width: 3%"></div>
+</div>
+</div>
+</div>
+<div class="mt-xl pt-lg border-t border-outline-variant">
+<div class="grid grid-cols-3 gap-md">
+<div class="text-center border-r border-outline-variant">
+<p class="text-headline-md font-bold text-on-surface">42 min</p>
+<p class="text-label-md text-on-surface-variant uppercase">Avg. Discharge Time</p>
+</div>
+<div class="text-center border-r border-outline-variant">
+<p class="text-headline-md font-bold text-on-surface">18%</p>
+<p class="text-label-md text-on-surface-variant uppercase">Cleaning Turnaround</p>
+</div>
+<div class="text-center">
+<p class="text-headline-md font-bold text-on-surface">12</p>
+<p class="text-label-md text-on-surface-variant uppercase">Beds in Maintenance</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Resource Tracking Table (Right Column Top) -->
+<div class="col-span-12 lg:col-span-4 space-y-lg">
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant p-lg">
+<div class="flex justify-between items-center mb-lg">
+<h3 class="text-headline-md font-headline-md">Critical Resources</h3>
+<a class="text-label-md text-primary font-bold hover:underline" href="#">View All</a>
+</div>
+<div class="space-y-lg">
+<div>
+<div class="flex justify-between mb-xs">
+<span class="text-body-md font-medium">Oxygen Cylinders (H-Type)</span>
+<span class="text-label-md font-bold text-on-surface">142/200</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-2">
+<div class="bg-primary h-2 rounded-full" style="width: 71%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-xs">
+<span class="text-body-md font-medium">Ventilators (Portable)</span>
+<span class="text-label-md font-bold text-error">4/40</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-2">
+<div class="bg-error h-2 rounded-full" style="width: 10%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-xs">
+<span class="text-body-md font-medium">Patient Monitors</span>
+<span class="text-label-md font-bold text-on-surface">56/60</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-2">
+<div class="bg-[#10b981] h-2 rounded-full" style="width: 93%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-xs">
+<span class="text-body-md font-medium">Defibrillators</span>
+<span class="text-label-md font-bold text-on-surface">18/20</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-2">
+<div class="bg-[#10b981] h-2 rounded-full" style="width: 90%"></div>
+</div>
+</div>
+</div>
+<button class="w-full mt-lg py-sm text-label-md font-bold border border-outline-variant rounded-lg hover:bg-surface-container transition-colors">
+                        Request Replenishment
+                    </button>
+</div>
+<!-- Recent Admissions (Right Column Bottom) -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden">
+<div class="p-lg bg-surface-container-low border-b border-outline-variant">
+<h3 class="text-headline-md font-headline-md">Recent Admissions</h3>
+</div>
+<div class="divide-y divide-outline-variant">
+<!-- Patient 1 -->
+<div class="p-md hover:bg-primary/5 transition-colors cursor-pointer group">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-body-md font-bold">Johnathan Blake</p>
+<p class="text-label-md text-on-surface-variant">ID: #PX-9821 • Male, 45y</p>
+</div>
+<span class="px-xs py-[2px] bg-error-container text-on-error-container text-[10px] font-bold rounded uppercase">ICU-4</span>
+</div>
+<p class="text-body-sm text-on-surface-variant mt-xs line-clamp-1">Severe respiratory distress, chronic COPD history...</p>
+<p class="text-label-md text-primary mt-xs font-medium">Admitted 12m ago</p>
+</div>
+<!-- Patient 2 -->
+<div class="p-md hover:bg-primary/5 transition-colors cursor-pointer">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-body-md font-bold">Elena Rodriguez</p>
+<p class="text-label-md text-on-surface-variant">ID: #PX-9822 • Female, 28y</p>
+</div>
+<span class="px-xs py-[2px] bg-tertiary-fixed text-on-tertiary-fixed-variant text-[10px] font-bold rounded uppercase">Gen-A12</span>
+</div>
+<p class="text-body-sm text-on-surface-variant mt-xs line-clamp-1">Post-operative recovery, appendectomy...</p>
+<p class="text-label-md text-on-surface-variant mt-xs">Admitted 45m ago</p>
+</div>
+<!-- Patient 3 -->
+<div class="p-md hover:bg-primary/5 transition-colors cursor-pointer">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-body-md font-bold">Samuel Thompson</p>
+<p class="text-label-md text-on-surface-variant">ID: #PX-9823 • Male, 62y</p>
+</div>
+<span class="px-xs py-[2px] bg-secondary-fixed text-on-secondary-fixed-variant text-[10px] font-bold rounded uppercase">Iso-02</span>
+</div>
+<p class="text-body-sm text-on-surface-variant mt-xs line-clamp-1">Suspected viral pneumonia, fever 102F...</p>
+<p class="text-label-md text-on-surface-variant mt-xs">Admitted 1h 12m ago</p>
+</div>
+<!-- Patient 4 -->
+<div class="p-md hover:bg-primary/5 transition-colors cursor-pointer">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-body-md font-bold">Maria Garcia</p>
+<p class="text-label-md text-on-surface-variant">ID: #PX-9824 • Female, 54y</p>
+</div>
+<span class="px-xs py-[2px] bg-tertiary-fixed text-on-tertiary-fixed-variant text-[10px] font-bold rounded uppercase">Gen-B05</span>
+</div>
+<p class="text-body-sm text-on-surface-variant mt-xs line-clamp-1">Elective orthopedic surgery preparation...</p>
+<p class="text-label-md text-on-surface-variant mt-xs">Admitted 2h 05m ago</p>
+</div>
+</div>
+<button class="w-full p-md text-center text-label-md font-bold text-primary hover:bg-surface-container-high transition-colors">
+                        View All Admissions
+                    </button>
+</div>
+</div>
+</div>
+<!-- Animated Background Element (Subtle) -->
+<div class="fixed bottom-0 right-0 w-64 h-64 pointer-events-none opacity-20">
+
+</div>
+</main>
+<script>
+        // Micro-interaction for Stat Cards
+        document.querySelectorAll('.stat-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.classList.add('shadow-md', '-translate-y-1');
+            });
+            card.addEventListener('mouseleave', () => {
+                card.classList.remove('shadow-md', '-translate-y-1');
+            });
+        });
+
+        // Simulating Real-time updates for Capacity Bars
+        const updateInterval = setInterval(() => {
+            const segments = document.querySelectorAll('.capacity-bar-segment');
+            segments.forEach(segment => {
+                const currentWidth = parseFloat(segment.style.width);
+                const variance = (Math.random() - 0.5) * 2; // +/- 1%
+                const newWidth = Math.min(Math.max(currentWidth + variance, 2), 98);
+                // In a real app, this would fetch from a WebSocket or REST API
+            });
+        }, 5000);
+    </script>
+</body></html>

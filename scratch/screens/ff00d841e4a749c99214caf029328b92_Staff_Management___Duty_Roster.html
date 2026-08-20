@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MediFlow | Doctor &amp; Staff Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error-container": "#ffdad6",
+                    "surface-bright": "#f7f9fb",
+                    "on-tertiary-fixed": "#0b1c30",
+                    "on-secondary-container": "#004b69",
+                    "inverse-surface": "#2d3133",
+                    "on-secondary-fixed-variant": "#004c6b",
+                    "tertiary-fixed": "#d3e4fe",
+                    "inverse-primary": "#a9c7ff",
+                    "tertiary-fixed-dim": "#b7c8e1",
+                    "surface-container": "#eceef0",
+                    "secondary-fixed-dim": "#81cfff",
+                    "on-primary-fixed": "#001b3d",
+                    "on-error": "#ffffff",
+                    "surface": "#f7f9fb",
+                    "secondary": "#00658d",
+                    "primary-fixed": "#d6e3ff",
+                    "on-primary": "#ffffff",
+                    "background": "#f7f9fb",
+                    "surface-variant": "#e0e3e5",
+                    "surface-container-high": "#e6e8ea",
+                    "outline-variant": "#c2c6d4",
+                    "on-surface": "#191c1e",
+                    "outline": "#727783",
+                    "on-tertiary": "#ffffff",
+                    "primary-container": "#005eb8",
+                    "secondary-container": "#41befd",
+                    "tertiary-container": "#506076",
+                    "surface-tint": "#005db6",
+                    "on-tertiary-fixed-variant": "#38485d",
+                    "on-primary-fixed-variant": "#00468c",
+                    "on-background": "#191c1e",
+                    "on-error-container": "#93000a",
+                    "inverse-on-surface": "#eff1f3",
+                    "on-secondary": "#ffffff",
+                    "on-surface-variant": "#424752",
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary-container": "#cadbf5",
+                    "surface-container-low": "#f2f4f6",
+                    "surface-container-highest": "#e0e3e5",
+                    "error": "#ba1a1a",
+                    "primary-fixed-dim": "#a9c7ff",
+                    "on-primary-container": "#c8daff",
+                    "tertiary": "#39485e",
+                    "primary": "#00478d",
+                    "on-secondary-fixed": "#001e2d",
+                    "surface-dim": "#d8dadc",
+                    "secondary-fixed": "#c6e7ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "16px",
+                    "margin-desktop": "32px",
+                    "xs": "8px",
+                    "sm": "12px",
+                    "base": "4px",
+                    "xl": "32px",
+                    "md": "16px",
+                    "lg": "24px",
+                    "gutter": "20px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Inter"],
+                    "data-mono": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "body-md": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "headline-md": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "display-lg": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .capacity-bar-segment { transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(226, 232, 240, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-surface-bright text-on-surface min-h-screen">
+<!-- Side Navigation Shell -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container-lowest border-r border-outline-variant shadow-sm flex flex-col py-lg z-50">
+<div class="px-lg mb-xl">
+<h1 class="text-headline-md font-headline-md font-bold text-primary">MediFlow</h1>
+<p class="font-body-sm text-on-surface-variant">City General Hospital</p>
+</div>
+<nav class="flex-1 px-sm space-y-base">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant font-body-md hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span> Dashboard
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant font-body-md hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">domain</span> Ward Overview
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant font-body-md hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">bed</span> Bed Management
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant font-body-md hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">transfer_within_a_station</span> Patient Flow
+            </a>
+<!-- Active Tab: Staffing -->
+<a class="flex items-center gap-3 px-4 py-3 text-primary font-body-md bg-primary-container/10 border-r-4 border-primary rounded-lg" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">groups</span> Staffing
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant font-body-md hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">analytics</span> Analytics
+            </a>
+</nav>
+</aside>
+<!-- Top Navigation Shell -->
+<header class="flex justify-between items-center w-full px-margin-desktop py-xs ml-64 max-w-[calc(100%-16rem)] sticky top-0 bg-surface-bright/90 backdrop-blur-md z-40 shadow-sm border-b border-outline-variant/30">
+<div class="flex items-center gap-lg w-1/2">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full focus:ring-2 focus:ring-primary text-body-md outline-none" placeholder="Search staff, departments, or shifts..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="p-2 hover:bg-surface-container-low rounded-full transition-all relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 hover:bg-surface-container-low rounded-full transition-all">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="h-8 w-px bg-outline-variant mx-2"></div>
+<div class="flex items-center gap-sm">
+<div class="text-right hidden lg:block">
+<p class="font-label-md text-on-surface">Dr. Sarah Chen</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-wider">Chief Administrator</p>
+</div>
+<img class="w-10 h-10 rounded-full border-2 border-primary/20 object-cover" data-alt="A professional headshot of a middle-aged female hospital administrator with a warm and confident expression, wearing a navy blue blazer and a stethoscope draped around her neck, set against a clean and bright modern hospital lobby background with soft morning light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXEKcsDVYEguTtGLcQyFl2Wyx2vavU7PEQxuQeeEIrsk1pFgfQZ5UHHPjEXdWtbp2RDEHuAbpYbTLK4ldP4mH0Q61y7fMmDIwtrCM5nkKfsMTI2t3wqCVA9V0iO8Jix6muADqXYoW8dMJraxPBlmjMozG1h-FxfsL64p5baVF6GUNgvmy5JaYg1FNzzZVDJRnA9G1YCzw7TUSobXuWwyKZ2lV80_ssUxsUhCm5RGuN8GHPX2SPyRuX2GjIRJE2JwsnYgwTzx3ljQ6d"/>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-64 p-margin-desktop space-y-xl">
+<!-- Dashboard Header & Stats -->
+<div class="flex justify-between items-end">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-primary">Doctor &amp; Staff Management</h2>
+<p class="font-body-md text-on-surface-variant">Real-time oversight of personnel deployment and shift cycles.</p>
+</div>
+<button class="bg-primary text-on-primary px-lg py-sm rounded-lg flex items-center gap-2 font-body-md font-bold shadow-md hover:opacity-90 transition-all active:scale-95" onclick="document.getElementById('shift-modal').classList.remove('hidden')">
+<span class="material-symbols-outlined">add_task</span> Assign Shift
+            </button>
+</div>
+<!-- Bento Grid Stats -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-lg">
+<div class="glass-card p-lg rounded-xl shadow-sm">
+<div class="flex justify-between items-start mb-sm">
+<div class="p-2 bg-primary/10 rounded-lg text-primary">
+<span class="material-symbols-outlined">person_check</span>
+</div>
+<span class="text-secondary font-label-md">+4 Today</span>
+</div>
+<p class="text-on-surface-variant font-label-md">TOTAL ON-DUTY</p>
+<p class="font-headline-lg text-headline-lg">124</p>
+</div>
+<div class="glass-card p-lg rounded-xl shadow-sm">
+<div class="flex justify-between items-start mb-sm">
+<div class="p-2 bg-secondary-container/20 rounded-lg text-secondary">
+<span class="material-symbols-outlined">medical_services</span>
+</div>
+<span class="text-error font-label-md">-2 Late</span>
+</div>
+<p class="text-on-surface-variant font-label-md">DOCTORS ACTIVE</p>
+<p class="font-headline-lg text-headline-lg">42</p>
+</div>
+<div class="glass-card p-lg rounded-xl shadow-sm">
+<div class="flex justify-between items-start mb-sm">
+<div class="p-2 bg-tertiary-container/20 rounded-lg text-tertiary">
+<span class="material-symbols-outlined">support_agent</span>
+</div>
+<span class="text-on-surface-variant font-label-md">15m Response</span>
+</div>
+<p class="text-on-surface-variant font-label-md">ON-CALL STAFF</p>
+<p class="font-headline-lg text-headline-lg">18</p>
+</div>
+<div class="glass-card p-lg rounded-xl shadow-sm">
+<div class="flex justify-between items-start mb-sm">
+<div class="p-2 bg-error-container/20 rounded-lg text-error">
+<span class="material-symbols-outlined">warning</span>
+</div>
+<span class="text-error font-label-md">High Demand</span>
+</div>
+<p class="text-on-surface-variant font-label-md">ICU VACANCY</p>
+<p class="font-headline-lg text-headline-lg">3</p>
+</div>
+</div>
+<!-- Directory & Calendar Section -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-lg h-auto">
+<!-- Staff Directory (Left Col) -->
+<div class="lg:col-span-8 glass-card rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="p-lg border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
+<h3 class="font-headline-md text-headline-md">Staff Directory</h3>
+<div class="flex gap-sm">
+<select class="bg-surface-container-low border-none rounded-lg text-body-sm font-medium focus:ring-primary py-1.5 px-3">
+<option>All Departments</option>
+<option>Cardiology</option>
+<option>ICU</option>
+<option>General Ward</option>
+</select>
+<button class="p-2 hover:bg-surface-container-low rounded-lg transition-colors">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-surface-container-low/50 sticky top-0 font-label-md text-on-surface-variant uppercase tracking-wider">
+<tr>
+<th class="px-lg py-md">Name / Role</th>
+<th class="px-lg py-md">Department</th>
+<th class="px-lg py-md">Status</th>
+<th class="px-lg py-md text-center">Capacity</th>
+<th class="px-lg py-md">Shift</th>
+<th class="px-lg py-md"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30">
+<!-- Staff Member 1 -->
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-lg py-md">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">AL</div>
+<div>
+<p class="font-body-md font-bold">Dr. Alana L. </p>
+<p class="text-body-sm text-on-surface-variant">Senior Cardiologist</p>
+</div>
+</div>
+</td>
+<td class="px-lg py-md">
+<span class="px-2 py-1 rounded bg-surface-variant text-on-surface-variant font-label-md">Cardiology</span>
+</td>
+<td class="px-lg py-md">
+<span class="flex items-center gap-1.5 text-secondary font-body-sm">
+<span class="w-2 h-2 rounded-full bg-secondary"></span> On-Duty
+                                    </span>
+</td>
+<td class="px-lg py-md w-32">
+<div class="h-1.5 w-full bg-outline-variant/30 rounded-full overflow-hidden">
+<div class="h-full bg-error rounded-full" style="width: 85%"></div>
+</div>
+<p class="text-[10px] text-right mt-1 text-on-surface-variant">85% Loaded</p>
+</td>
+<td class="px-lg py-md font-body-sm">Morning (06:00 - 14:00)</td>
+<td class="px-lg py-md text-right">
+<button class="material-symbols-outlined text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">more_vert</button>
+</td>
+</tr>
+<!-- Staff Member 2 -->
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-lg py-md">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center text-secondary font-bold">JK</div>
+<div>
+<p class="font-body-md font-bold">James K.</p>
+<p class="text-body-sm text-on-surface-variant">Head Nurse</p>
+</div>
+</div>
+</td>
+<td class="px-lg py-md">
+<span class="px-2 py-1 rounded bg-surface-variant text-on-surface-variant font-label-md">ICU</span>
+</td>
+<td class="px-lg py-md">
+<span class="flex items-center gap-1.5 text-primary font-body-sm">
+<span class="w-2 h-2 rounded-full bg-primary"></span> On-Call
+                                    </span>
+</td>
+<td class="px-lg py-md w-32">
+<div class="h-1.5 w-full bg-outline-variant/30 rounded-full overflow-hidden">
+<div class="h-full bg-secondary rounded-full" style="width: 20%"></div>
+</div>
+<p class="text-[10px] text-right mt-1 text-on-surface-variant">20% Loaded</p>
+</td>
+<td class="px-lg py-md font-body-sm">Evening (14:00 - 22:00)</td>
+<td class="px-lg py-md text-right">
+<button class="material-symbols-outlined text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">more_vert</button>
+</td>
+</tr>
+<!-- Staff Member 3 -->
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-lg py-md">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-tertiary/10 flex items-center justify-center text-tertiary font-bold">MH</div>
+<div>
+<p class="font-body-md font-bold">Maya H.</p>
+<p class="text-body-sm text-on-surface-variant">Junior Resident</p>
+</div>
+</div>
+</td>
+<td class="px-lg py-md">
+<span class="px-2 py-1 rounded bg-surface-variant text-on-surface-variant font-label-md">General Ward</span>
+</td>
+<td class="px-lg py-md">
+<span class="flex items-center gap-1.5 text-on-surface-variant font-body-sm">
+<span class="w-2 h-2 rounded-full bg-outline"></span> Off-Duty
+                                    </span>
+</td>
+<td class="px-lg py-md w-32">
+<div class="h-1.5 w-full bg-outline-variant/30 rounded-full overflow-hidden">
+<div class="h-full bg-outline rounded-full" style="width: 0%"></div>
+</div>
+<p class="text-[10px] text-right mt-1 text-on-surface-variant">Available</p>
+</td>
+<td class="px-lg py-md font-body-sm">Night (22:00 - 06:00)</td>
+<td class="px-lg py-md text-right">
+<button class="material-symbols-outlined text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">more_vert</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Calendar / Shift Overview (Right Col) -->
+<div class="lg:col-span-4 space-y-lg">
+<div class="glass-card rounded-xl shadow-sm p-lg">
+<div class="flex justify-between items-center mb-lg">
+<h3 class="font-headline-md text-headline-md">Shift Cycles</h3>
+<div class="flex items-center gap-2">
+<button class="p-1 hover:bg-surface-container-low rounded-lg transition-colors"><span class="material-symbols-outlined text-body-md">chevron_left</span></button>
+<span class="font-body-md font-bold">Oct 24</span>
+<button class="p-1 hover:bg-surface-container-low rounded-lg transition-colors"><span class="material-symbols-outlined text-body-md">chevron_right</span></button>
+</div>
+</div>
+<div class="space-y-md">
+<!-- Morning Shift -->
+<div class="p-md rounded-lg bg-secondary/5 border-l-4 border-secondary">
+<div class="flex justify-between items-center mb-xs">
+<p class="font-body-md font-bold text-secondary">Morning Shift</p>
+<span class="font-label-md text-secondary">06:00 - 14:00</span>
+</div>
+<div class="flex -space-x-2 mb-sm">
+<img class="w-7 h-7 rounded-full border-2 border-surface-container-lowest" data-alt="Small circle avatar of a doctor with glasses and smiling" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvWZln50PZh1aODL6IbBtG51db_WgyQINl8t6vLu_o8ed_zVYfT57RwUfXPM9bKQBkq-bGv_IxxHGMM62XfXO0oyk0QZJTPBz8bMYgUaGfyEbnrCYFvGRyea3RCYWkthf761dbzpX6KNYE1adoxspSpAzdX1K4gGAEheBOC2yaUWcY9hr4A9hO0QnfVZSC8wJ_bP7RQo1jfabO87T99xm56QJY-eq6BPnbP1TJQcidHj3kVL_CH1ngkZTE9CYjQD7WOZQnoOws3P_H"/>
+<img class="w-7 h-7 rounded-full border-2 border-surface-container-lowest" data-alt="Small circle avatar of a nurse with blue scrubs" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5tkuIg0qE5J8biQvf5lKz1Kv2qwGo7He7zJeM4bBtTVI_zq2_Q-KHrzCU-vdGPirxm-Z8aRx2F9ticPC3z1_YNXJPERH1rvZgOmbbqHp4PlNnxwN_7LKL6XdopBbk9MyZx_yeubA0vUMKawuVv7ul_lqF_e_f49sNFbaAwQKj50GcKS4xVJWG2FMPDmJGeM2LRgO7v03XhtaEcSW6a0t3L8ngHWL0cYnd5eHSAczZ5BAEPRt1Ogpvo4M0vKM8MYJZtQaNIZAhEGOm"/>
+<div class="w-7 h-7 rounded-full border-2 border-surface-container-lowest bg-secondary-container text-[10px] flex items-center justify-center font-bold text-on-secondary-container">+12</div>
+</div>
+<div class="w-full h-1.5 bg-outline-variant/20 rounded-full">
+<div class="h-full bg-secondary rounded-full" style="width: 90%"></div>
+</div>
+<p class="text-[10px] text-on-surface-variant mt-1 uppercase tracking-tighter">Full Staffing Reached</p>
+</div>
+<!-- Evening Shift -->
+<div class="p-md rounded-lg bg-primary/5 border-l-4 border-primary">
+<div class="flex justify-between items-center mb-xs">
+<p class="font-body-md font-bold text-primary">Evening Shift</p>
+<span class="font-label-md text-primary">14:00 - 22:00</span>
+</div>
+<div class="flex -space-x-2 mb-sm">
+<img class="w-7 h-7 rounded-full border-2 border-surface-container-lowest" data-alt="Small circle avatar of a male doctor in his 30s" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPYDOnLz2yQJosZOZ7yutExLGiD7ma4bZXlahru66i1tDYbeMmZabcp-YibEjmiSbYdI6x6OZTzZD35CIUh6cPw829tVaarThJ3q-svBO3i4KprEqg24Pc0XYL54RaJx3oePIOdId_xfm9qhbejEZxYX0lt8H1oRCYZ17D-w6bi6Vt-mMKP9IWzmOXo1FAHAHtL566h1MPg2ztRgeTVPYgzF8yZFQFAlU109tk5uZbYaeP2hG4tniaP0PuVkOtR6IzfXvH6MyEYNFC"/>
+<img class="w-7 h-7 rounded-full border-2 border-surface-container-lowest" data-alt="Small circle avatar of a female doctor in green scrubs" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwqEvLYP2skifF4412dLFc2ds5_w7GABSSbRZHGFqfxje7VX3axdwQ0N2XH5nNTFIg_ILvxVPjjhknYC_Sr1bsdDeB-KRKhYyWX-I-o_8XP8y_SD4UHau63ufazAsFu75pRdpVEjoL4GFVEujhhSUAEuf7gBP_5Ad7ThKUjuFPo9pZoXJuFoTIQ6-0DBzgHTQBi56DRl1zoCaVMEjdmXXwA6Xrn9uoHW35na0bMaaER_Tmodec7hdi_cbSyaRFVWqaKWv-u3KHU6AJ"/>
+<div class="w-7 h-7 rounded-full border-2 border-surface-container-lowest bg-primary-container/20 text-[10px] flex items-center justify-center font-bold text-primary">+8</div>
+</div>
+<div class="w-full h-1.5 bg-outline-variant/20 rounded-full">
+<div class="h-full bg-primary rounded-full" style="width: 65%"></div>
+</div>
+<p class="text-[10px] text-on-surface-variant mt-1 uppercase tracking-tighter">Needs 3 More Nurses</p>
+</div>
+<!-- Night Shift -->
+<div class="p-md rounded-lg bg-tertiary/5 border-l-4 border-tertiary">
+<div class="flex justify-between items-center mb-xs">
+<p class="font-body-md font-bold text-tertiary">Night Shift</p>
+<span class="font-label-md text-tertiary">22:00 - 06:00</span>
+</div>
+<div class="flex -space-x-2 mb-sm">
+<img class="w-7 h-7 rounded-full border-2 border-surface-container-lowest" data-alt="Small circle avatar of a surgical specialist" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUgQ4CLc9V-WfrEB9bgqWpyKtuUU0RuUj5kD9in3mO0Df2uYAJsViAmiY1Px4UNHunRV-yfsiyimSSGdeBSEObyGYn32T4tV2Uh3iC6QZM-2B-AyQoNHDer-2LKqUPsCwTyerO5IO3HHflSQ0WQhO_0Q-PBExywH28PE_sGw59g1Va-c9FZZIOGPfuGp3nzuNVlt4qPQQOE4h6ZqENT8PdzzPETeRB50J33k9GR_6GrSuuliPyDo0_zoWNLIKNoSBDOCr66qynyyeF"/>
+<div class="w-7 h-7 rounded-full border-2 border-surface-container-lowest bg-tertiary-container/20 text-[10px] flex items-center justify-center font-bold text-tertiary">+5</div>
+</div>
+<div class="w-full h-1.5 bg-outline-variant/20 rounded-full">
+<div class="h-full bg-tertiary rounded-full" style="width: 40%"></div>
+</div>
+<p class="text-[10px] text-on-surface-variant mt-1 uppercase tracking-tighter">Understaffed - Urgent</p>
+</div>
+</div>
+</div>
+<!-- Department Quick Filters -->
+<div class="glass-card rounded-xl shadow-sm p-lg">
+<h3 class="font-headline-md text-headline-md mb-md">Departments</h3>
+<div class="grid grid-cols-2 gap-sm">
+<button class="p-md bg-surface-container-low rounded-lg text-left hover:bg-primary/10 transition-all border border-transparent hover:border-primary/20">
+<p class="font-body-md font-bold">Cardiology</p>
+<p class="text-body-sm text-on-surface-variant">18 Staff</p>
+</button>
+<button class="p-md bg-surface-container-low rounded-lg text-left hover:bg-primary/10 transition-all border border-transparent hover:border-primary/20">
+<p class="font-body-md font-bold">ICU</p>
+<p class="text-body-sm text-on-surface-variant">24 Staff</p>
+</button>
+<button class="p-md bg-surface-container-low rounded-lg text-left hover:bg-primary/10 transition-all border border-transparent hover:border-primary/20">
+<p class="font-body-md font-bold">Pediatrics</p>
+<p class="text-body-sm text-on-surface-variant">12 Staff</p>
+</button>
+<button class="p-md bg-surface-container-low rounded-lg text-left hover:bg-primary/10 transition-all border border-transparent hover:border-primary/20">
+<p class="font-body-md font-bold">Surgery</p>
+<p class="text-body-sm text-on-surface-variant">15 Staff</p>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Assign Shift Modal -->
+<div class="hidden fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm z-[100] flex items-center justify-center p-md" id="shift-modal">
+<div class="bg-surface-container-lowest w-full max-w-lg rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
+<div class="p-lg border-b border-outline-variant flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md text-primary">Assign New Shift</h3>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors" onclick="document.getElementById('shift-modal').classList.add('hidden')">close</button>
+</div>
+<div class="p-lg space-y-lg">
+<div class="space-y-xs">
+<label class="font-label-md text-on-surface-variant">SELECT STAFF MEMBER</label>
+<select class="w-full bg-surface-container-low border-none rounded-lg font-body-md focus:ring-2 focus:ring-primary">
+<option>Dr. Alana L. - Cardiology</option>
+<option>James K. - ICU</option>
+<option>Maya H. - General Ward</option>
+<option>Sarah P. - Pediatrics</option>
+</select>
+</div>
+<div class="grid grid-cols-2 gap-lg">
+<div class="space-y-xs">
+<label class="font-label-md text-on-surface-variant">SHIFT TYPE</label>
+<div class="flex flex-col gap-sm">
+<label class="flex items-center gap-sm font-body-md cursor-pointer hover:bg-surface-container-low p-2 rounded-lg transition-colors">
+<input class="text-primary focus:ring-primary h-4 w-4" name="shift" type="radio"/> Morning
+                            </label>
+<label class="flex items-center gap-sm font-body-md cursor-pointer hover:bg-surface-container-low p-2 rounded-lg transition-colors">
+<input class="text-primary focus:ring-primary h-4 w-4" name="shift" type="radio"/> Evening
+                            </label>
+<label class="flex items-center gap-sm font-body-md cursor-pointer hover:bg-surface-container-low p-2 rounded-lg transition-colors">
+<input class="text-primary focus:ring-primary h-4 w-4" name="shift" type="radio"/> Night
+                            </label>
+</div>
+</div>
+<div class="space-y-xs">
+<label class="font-label-md text-on-surface-variant">DATE SELECTOR</label>
+<input class="w-full bg-surface-container-low border-none rounded-lg font-body-md focus:ring-2 focus:ring-primary" type="date"/>
+<div class="mt-4 p-md bg-secondary/5 rounded-lg">
+<p class="text-[10px] text-secondary font-bold uppercase">Estimated Load</p>
+<p class="font-headline-md text-secondary">75%</p>
+<p class="text-[10px] text-on-surface-variant">Predicted for selected date</p>
+</div>
+</div>
+</div>
+</div>
+<div class="p-lg bg-surface-container-low flex justify-end gap-md">
+<button class="px-lg py-sm font-body-md font-bold text-on-surface-variant hover:bg-outline-variant/20 rounded-lg transition-colors" onclick="document.getElementById('shift-modal').classList.add('hidden')">Cancel</button>
+<button class="bg-primary text-on-primary px-xl py-sm rounded-lg font-body-md font-bold shadow-lg hover:opacity-90 active:scale-95 transition-all">Confirm Assignment</button>
+</div>
+</div>
+</div>
+<!-- Floating Action Feedback (Toast-like, just for visual sugar) -->
+<div class="fixed bottom-lg right-lg bg-inverse-surface text-inverse-on-surface px-lg py-md rounded-lg shadow-xl translate-y-24 transition-transform duration-300 flex items-center gap-sm z-[110]" id="toast">
+<span class="material-symbols-outlined text-secondary">check_circle</span>
+<p class="font-body-md">Shift updated successfully.</p>
+</div>
+<script>
+        // Micro-interaction for modal closing on outside click
+        window.onclick = function(event) {
+            let modal = document.getElementById('shift-modal');
+            if (event.target == modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        // Search Bar Focus Effect
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('ring-2', 'ring-primary/30');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('ring-2', 'ring-primary/30');
+        });
+
+        // Simple Toast trigger for demonstration
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.remove('translate-y-24');
+            setTimeout(() => {
+                toast.classList.add('translate-y-24');
+            }, 3000);
+        }
+    </script>
+</body></html>

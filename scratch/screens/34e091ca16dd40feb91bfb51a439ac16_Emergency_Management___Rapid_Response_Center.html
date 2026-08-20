@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MediFlow | Emergency Management Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline-variant": "#c2c6d4",
+                    "on-primary-container": "#c8daff",
+                    "secondary-container": "#41befd",
+                    "surface-container-high": "#e6e8ea",
+                    "error-container": "#ffdad6",
+                    "surface-variant": "#e0e3e5",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-fixed-dim": "#81cfff",
+                    "secondary": "#00658d",
+                    "on-secondary-fixed": "#001e2d",
+                    "surface-container-low": "#f2f4f6",
+                    "on-tertiary-fixed-variant": "#38485d",
+                    "on-surface": "#191c1e",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "surface-bright": "#f7f9fb",
+                    "inverse-surface": "#2d3133",
+                    "on-secondary-container": "#004b69",
+                    "on-background": "#191c1e",
+                    "surface-dim": "#d8dadc",
+                    "on-error-container": "#93000a",
+                    "tertiary-fixed-dim": "#b7c8e1",
+                    "on-tertiary-fixed": "#0b1c30",
+                    "surface-tint": "#005db6",
+                    "primary": "#00478d",
+                    "background": "#f7f9fb",
+                    "surface-container": "#eceef0",
+                    "outline": "#727783",
+                    "inverse-on-surface": "#eff1f3",
+                    "on-secondary-fixed-variant": "#004c6b",
+                    "error": "#ba1a1a",
+                    "secondary-fixed": "#c6e7ff",
+                    "on-primary-fixed-variant": "#00468c",
+                    "on-error": "#ffffff",
+                    "primary-fixed-dim": "#a9c7ff",
+                    "on-tertiary-container": "#cadbf5",
+                    "inverse-primary": "#a9c7ff",
+                    "surface": "#f7f9fb",
+                    "on-surface-variant": "#424752",
+                    "tertiary-container": "#506076",
+                    "tertiary": "#39485e",
+                    "primary-container": "#005eb8",
+                    "on-primary-fixed": "#001b3d",
+                    "tertiary-fixed": "#d3e4fe",
+                    "surface-container-highest": "#e0e3e5",
+                    "primary-fixed": "#d6e3ff",
+                    "on-primary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "16px",
+                    "margin-desktop": "32px",
+                    "xl": "32px",
+                    "xs": "8px",
+                    "base": "4px",
+                    "sm": "12px",
+                    "md": "16px",
+                    "gutter": "20px",
+                    "lg": "24px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "data-mono": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "display-lg": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .status-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        .critical-glow {
+            box-shadow: 0 0 15px rgba(186, 26, 26, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col h-screen w-64 left-0 top-0 fixed bg-surface-container-low dark:bg-surface-container-lowest border-r border-outline-variant py-lg px-md z-50">
+<div class="flex flex-col gap-xs mb-xl">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary" style="font-variation-settings: 'FILL' 1;">emergency</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md text-primary">MediFlow</h1>
+<p class="text-label-md font-label-md text-on-surface-variant">City General Hospital</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-base">
+<a class="flex items-center gap-md p-sm text-on-surface-variant hover:bg-surface-variant/50 transition-all rounded-lg cursor-pointer" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-md p-sm text-on-surface-variant hover:bg-surface-variant/50 transition-all rounded-lg cursor-pointer" href="#">
+<span class="material-symbols-outlined">bed</span>
+<span class="font-label-md text-label-md">Bed Management</span>
+</a>
+<a class="flex items-center gap-md p-sm text-on-surface-variant hover:bg-surface-variant/50 transition-all rounded-lg cursor-pointer" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md text-label-md">Resource Allocation</span>
+</a>
+<a class="flex items-center gap-md p-sm text-on-surface-variant hover:bg-surface-variant/50 transition-all rounded-lg cursor-pointer" href="#">
+<span class="material-symbols-outlined">person_search</span>
+<span class="font-label-md text-label-md">Patient Registry</span>
+</a>
+<a class="flex items-center gap-md p-sm text-on-surface-variant hover:bg-surface-variant/50 transition-all rounded-lg cursor-pointer" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md text-label-md">Staff Management</span>
+</a>
+<a class="flex items-center gap-md p-sm text-primary font-bold bg-primary-container/10 rounded-lg cursor-pointer" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">emergency</span>
+<span class="font-label-md text-label-md">Emergency</span>
+</a>
+<a class="flex items-center gap-md p-sm text-on-surface-variant hover:bg-surface-variant/50 transition-all rounded-lg cursor-pointer" href="#">
+<span class="material-symbols-outlined">assessment</span>
+<span class="font-label-md text-label-md">Reports</span>
+</a>
+</nav>
+<div class="mt-auto flex flex-col gap-base border-t border-outline-variant pt-lg">
+<a class="flex items-center gap-md p-sm text-on-surface-variant hover:bg-surface-variant/50 transition-all rounded-lg cursor-pointer" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-label-md text-label-md">Help Center</span>
+</a>
+<a class="flex items-center gap-md p-sm text-on-surface-variant hover:bg-surface-variant/50 transition-all rounded-lg cursor-pointer" href="#">
+<span class="material-symbols-outlined text-error">logout</span>
+<span class="font-label-md text-label-md text-error">Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-64 flex flex-col min-h-screen relative">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center w-full px-margin-desktop py-base z-40 bg-surface shadow-sm sticky top-0">
+<div class="flex items-center gap-lg">
+<div class="md:hidden flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary">menu</span>
+</div>
+<h2 class="font-headline-md text-headline-md font-bold text-primary">Emergency Hub</h2>
+</div>
+<div class="flex items-center gap-lg">
+<!-- Quick Action Buttons -->
+<div class="hidden lg:flex items-center gap-sm">
+<button class="bg-primary text-on-primary px-lg py-sm rounded-lg font-label-md text-label-md flex items-center gap-xs hover:opacity-90 active:opacity-80 transition-all">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+                        Register Emergency Case
+                    </button>
+<button class="bg-error text-on-error px-lg py-sm rounded-lg font-label-md text-label-md flex items-center gap-xs hover:opacity-90 active:opacity-80 transition-all">
+<span class="material-symbols-outlined text-[18px]">warning</span>
+                        Trigger Mass Casualty
+                    </button>
+</div>
+<div class="flex items-center gap-md border-l border-outline-variant pl-lg">
+<div class="relative cursor-pointer">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full"></span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">settings</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a senior hospital administrator wearing clinical scrubs and a badge, set against a blurred high-tech medical background. The lighting is soft and professional, emphasizing expertise and authority in a modern healthcare setting. The color palette is composed of clean whites and medical blues." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNhYl64eHOkZJvjCPLbhu0J0bXTcHt0hLgrsciuA8WMXBbjV0VDHYHGbhKP3K8PK6l7YBEdMm_nXz53iXYpvhDxcwAPNtZ0_nD76Sb42eQ2TeVBkIhh3yZJjdj22540sP4r1SbIyzqSCGh_b_kD8r_uZkpHd3VRXvmbdAuX8ffw6Y6BqdRg6-5QP3A4-XsZZcpUXsuHThk6sbURbptXoPR9uDiRwiBh30VdxpyF1ke4ML6EZ7fhbMAZg1WudC0DF58o8LAIERwExRv"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Dashboard Canvas -->
+<div class="p-margin-desktop flex flex-col gap-lg">
+<!-- Alert Banner -->
+<div class="bg-error-container text-on-error-container p-md rounded-xl flex items-center justify-between critical-glow">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-error text-[32px] status-pulse" style="font-variation-settings: 'FILL' 1;">emergency_home</span>
+<div>
+<p class="font-headline-md text-headline-md leading-tight">Incoming Level 1 Trauma: 4 mins ETA</p>
+<p class="text-body-sm font-body-sm opacity-80 uppercase tracking-wider">Trauma Bay 01 Prepped &amp; Ready</p>
+</div>
+</div>
+<button class="bg-error text-on-error px-lg py-sm rounded-lg font-label-md text-label-md">View Case File</button>
+</div>
+<!-- Stats Overview -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-lg">
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col gap-base">
+<div class="flex justify-between items-start">
+<span class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">ER Bed Capacity</span>
+<span class="material-symbols-outlined text-primary">bed</span>
+</div>
+<div class="flex items-baseline gap-xs mt-sm">
+<span class="text-display-lg font-display-lg">04</span>
+<span class="text-headline-md font-headline-md text-on-surface-variant">/ 18</span>
+</div>
+<div class="w-full h-2 bg-surface-container rounded-full mt-sm overflow-hidden">
+<div class="h-full bg-error rounded-full" style="width: 78%"></div>
+</div>
+<p class="text-body-sm font-body-sm text-error mt-xs font-semibold">Critical Level: High Occupancy</p>
+</div>
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col gap-base">
+<div class="flex justify-between items-start">
+<span class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">ICU Status</span>
+<span class="material-symbols-outlined text-secondary">monitor_heart</span>
+</div>
+<div class="flex items-baseline gap-xs mt-sm">
+<span class="text-display-lg font-display-lg">02</span>
+<span class="text-headline-md font-headline-md text-on-surface-variant">/ 12</span>
+</div>
+<div class="w-full h-2 bg-surface-container rounded-full mt-sm overflow-hidden">
+<div class="h-full bg-secondary rounded-full" style="width: 83%"></div>
+</div>
+<p class="text-body-sm font-body-sm text-secondary mt-xs font-semibold">Only 2 Units Available</p>
+</div>
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col gap-base">
+<div class="flex justify-between items-start">
+<span class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">Incoming Ambulances</span>
+<span class="material-symbols-outlined text-primary">ambulance</span>
+</div>
+<div class="flex items-baseline gap-xs mt-sm">
+<span class="text-display-lg font-display-lg">03</span>
+<span class="text-headline-md font-headline-md text-on-surface-variant">Active</span>
+</div>
+<div class="flex gap-xs mt-sm">
+<span class="w-2 h-2 rounded-full bg-error status-pulse"></span>
+<span class="w-2 h-2 rounded-full bg-error status-pulse"></span>
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-xs">2 Critical, 1 Stable</p>
+</div>
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col gap-base">
+<div class="flex justify-between items-start">
+<span class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">Response Team</span>
+<span class="material-symbols-outlined text-on-tertiary-fixed-variant">groups</span>
+</div>
+<div class="flex items-baseline gap-xs mt-sm">
+<span class="text-display-lg font-display-lg">14</span>
+<span class="text-headline-md font-headline-md text-on-surface-variant">On Duty</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-lg">2 Surgeons in Theatre</p>
+</div>
+</div>
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-lg">
+<!-- ER Map / Grid View -->
+<div class="xl:col-span-2 bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm">
+<div class="flex justify-between items-center mb-lg">
+<div>
+<h3 class="font-headline-md text-headline-md">ER Layout Map</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Real-time occupancy visualization</p>
+</div>
+<div class="flex gap-md">
+<div class="flex items-center gap-xs">
+<span class="w-3 h-3 rounded-full bg-error"></span>
+<span class="text-label-md font-label-md">Occupied</span>
+</div>
+<div class="flex items-center gap-xs">
+<span class="w-3 h-3 rounded-full bg-secondary-container"></span>
+<span class="text-label-md font-label-md">Cleaning</span>
+</div>
+<div class="flex items-center gap-xs">
+<span class="w-3 h-3 rounded-full bg-outline-variant"></span>
+<span class="text-label-md font-label-md">Available</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-md">
+<!-- Trauma Bays -->
+<div class="aspect-video bg-error-container border-2 border-error p-sm rounded flex flex-col justify-between">
+<span class="text-label-md font-bold text-error">BAY 01</span>
+<span class="material-symbols-outlined text-error self-center" style="font-variation-settings: 'FILL' 1;">person_alert</span>
+<span class="text-[10px] uppercase font-bold text-error text-center">TRAUMA (LVL 1)</span>
+</div>
+<div class="aspect-video bg-surface-container-high border border-outline-variant p-sm rounded flex flex-col justify-between cursor-pointer hover:bg-surface-variant transition-colors">
+<span class="text-label-md font-bold text-on-surface-variant">BAY 02</span>
+<span class="material-symbols-outlined text-outline-variant self-center">bed</span>
+<span class="text-[10px] uppercase font-bold text-on-surface-variant text-center">AVAILABLE</span>
+</div>
+<div class="aspect-video bg-secondary-container/20 border-2 border-secondary-container p-sm rounded flex flex-col justify-between">
+<span class="text-label-md font-bold text-on-secondary-container">BAY 03</span>
+<span class="material-symbols-outlined text-secondary-container self-center" style="font-variation-settings: 'FILL' 1;">cleaning_services</span>
+<span class="text-[10px] uppercase font-bold text-on-secondary-container text-center">CLEANING</span>
+</div>
+<div class="aspect-video bg-error-container/40 border border-error p-sm rounded flex flex-col justify-between">
+<span class="text-label-md font-bold text-on-error-container">BAY 04</span>
+<span class="material-symbols-outlined text-error self-center" style="font-variation-settings: 'FILL' 1;">personal_injury</span>
+<span class="text-[10px] uppercase font-bold text-on-error-container text-center">STABLE (LVL 3)</span>
+</div>
+<!-- More Bays Mockup -->
+<div class="aspect-video bg-surface-container-high border border-outline-variant p-sm rounded flex flex-col justify-between cursor-pointer hover:bg-surface-variant transition-colors">
+<span class="text-label-md font-bold text-on-surface-variant">BAY 05</span>
+<span class="material-symbols-outlined text-outline-variant self-center">bed</span>
+<span class="text-[10px] uppercase font-bold text-on-surface-variant text-center">AVAILABLE</span>
+</div>
+<div class="aspect-video bg-error-container border-2 border-error p-sm rounded flex flex-col justify-between">
+<span class="text-label-md font-bold text-error">BAY 06</span>
+<span class="material-symbols-outlined text-error self-center" style="font-variation-settings: 'FILL' 1;">person_alert</span>
+<span class="text-[10px] uppercase font-bold text-error text-center">CRITICAL</span>
+</div>
+<div class="aspect-video bg-error-container/40 border border-error p-sm rounded flex flex-col justify-between">
+<span class="text-label-md font-bold text-on-error-container">BAY 07</span>
+<span class="material-symbols-outlined text-error self-center" style="font-variation-settings: 'FILL' 1;">personal_injury</span>
+<span class="text-[10px] uppercase font-bold text-on-error-container text-center">URGENT</span>
+</div>
+<div class="aspect-video bg-surface-container-high border border-outline-variant p-sm rounded flex flex-col justify-between cursor-pointer hover:bg-surface-variant transition-colors">
+<span class="text-label-md font-bold text-on-surface-variant">BAY 08</span>
+<span class="material-symbols-outlined text-outline-variant self-center">bed</span>
+<span class="text-[10px] uppercase font-bold text-on-surface-variant text-center">AVAILABLE</span>
+</div>
+<div class="aspect-video bg-surface-container-high border border-outline-variant p-sm rounded flex flex-col justify-between cursor-pointer hover:bg-surface-variant transition-colors">
+<span class="text-label-md font-bold text-on-surface-variant">BAY 09</span>
+<span class="material-symbols-outlined text-outline-variant self-center">bed</span>
+<span class="text-[10px] uppercase font-bold text-on-surface-variant text-center">AVAILABLE</span>
+</div>
+<div class="aspect-video bg-error-container border-2 border-error p-sm rounded flex flex-col justify-between">
+<span class="text-label-md font-bold text-error">BAY 10</span>
+<span class="material-symbols-outlined text-error self-center" style="font-variation-settings: 'FILL' 1;">person_alert</span>
+<span class="text-[10px] uppercase font-bold text-error text-center">CRITICAL</span>
+</div>
+<div class="aspect-video bg-secondary-container/20 border-2 border-secondary-container p-sm rounded flex flex-col justify-between">
+<span class="text-label-md font-bold text-on-secondary-container">BAY 11</span>
+<span class="material-symbols-outlined text-secondary-container self-center" style="font-variation-settings: 'FILL' 1;">cleaning_services</span>
+<span class="text-[10px] uppercase font-bold text-on-secondary-container text-center">CLEANING</span>
+</div>
+<div class="aspect-video bg-error-container border-2 border-error p-sm rounded flex flex-col justify-between">
+<span class="text-label-md font-bold text-error">BAY 12</span>
+<span class="material-symbols-outlined text-error self-center" style="font-variation-settings: 'FILL' 1;">person_alert</span>
+<span class="text-[10px] uppercase font-bold text-error text-center">TRAUMA</span>
+</div>
+</div>
+<div class="mt-lg grid grid-cols-1 md:grid-cols-2 gap-lg">
+<div class="p-md bg-surface-container rounded-lg">
+<h4 class="font-label-md text-label-md uppercase mb-sm">Rapid Resource Assignment</h4>
+<div class="flex gap-sm">
+<button class="flex-1 bg-surface-container-lowest border border-outline-variant p-sm rounded-lg hover:bg-primary-container hover:text-on-primary transition-all flex flex-col items-center gap-xs">
+<span class="material-symbols-outlined">event</span>
+<span class="text-[10px] font-bold">VENTILATOR</span>
+</button>
+<button class="flex-1 bg-surface-container-lowest border border-outline-variant p-sm rounded-lg hover:bg-primary-container hover:text-on-primary transition-all flex flex-col items-center gap-xs">
+<span class="material-symbols-outlined">oxygen_saturation</span>
+<span class="text-[10px] font-bold">O2 TANK</span>
+</button>
+<button class="flex-1 bg-surface-container-lowest border border-outline-variant p-sm rounded-lg hover:bg-primary-container hover:text-on-primary transition-all flex flex-col items-center gap-xs">
+<span class="material-symbols-outlined">medical_services</span>
+<span class="text-[10px] font-bold">TRAUMA KIT</span>
+</button>
+<button class="flex-1 bg-surface-container-lowest border border-outline-variant p-sm rounded-lg hover:bg-primary-container hover:text-on-primary transition-all flex flex-col items-center gap-xs">
+<span class="material-symbols-outlined">monitor</span>
+<span class="text-[10px] font-bold">VITALS MON.</span>
+</button>
+</div>
+</div>
+<div class="p-md bg-surface-container rounded-lg border-l-4 border-primary">
+<h4 class="font-label-md text-label-md uppercase mb-sm text-primary">Emergency Bed Allocation Status</h4>
+<div class="flex flex-col gap-xs">
+<div class="flex justify-between items-center text-body-sm font-body-sm">
+<span>Main ER Floor</span>
+<span class="font-bold">14 / 18 Occupied</span>
+</div>
+<div class="w-full h-1.5 bg-background rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 77%"></div>
+</div>
+<div class="flex justify-between items-center text-body-sm font-body-sm mt-xs">
+<span>Pediatric ER</span>
+<span class="font-bold">03 / 08 Occupied</span>
+</div>
+<div class="w-full h-1.5 bg-background rounded-full overflow-hidden">
+<div class="h-full bg-secondary" style="width: 37%"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Priority Patient Handling & Alerts -->
+<div class="flex flex-col gap-lg">
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col">
+<div class="flex justify-between items-center mb-md">
+<h3 class="font-headline-md text-headline-md">Incoming Priority</h3>
+<span class="bg-error text-on-error px-xs py-[2px] rounded text-[10px] font-bold status-pulse">LIVE</span>
+</div>
+<div class="flex flex-col gap-md">
+<!-- Case 1 -->
+<div class="p-sm bg-error-container/20 border-l-4 border-error rounded flex items-center gap-md">
+<div class="w-10 h-10 bg-error rounded flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-error">ambulance</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-label-md font-bold truncate">Case #7482 - M, 45y</p>
+<p class="text-body-sm font-body-sm text-on-error-container">Cardiac Arrest - 2 min ETA</p>
+</div>
+<span class="text-error font-bold text-[10px] uppercase">Critical</span>
+</div>
+<!-- Case 2 -->
+<div class="p-sm bg-error-container/20 border-l-4 border-error rounded flex items-center gap-md">
+<div class="w-10 h-10 bg-error rounded flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-error">ambulance</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-label-md font-bold truncate">Case #7485 - F, 28y</p>
+<p class="text-body-sm font-body-sm text-on-error-container">Multiple Trauma - 8 min ETA</p>
+</div>
+<span class="text-error font-bold text-[10px] uppercase">Critical</span>
+</div>
+<!-- Case 3 -->
+<div class="p-sm bg-surface-container rounded flex items-center gap-md">
+<div class="w-10 h-10 bg-on-tertiary-fixed-variant rounded flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-white">ambulance</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-label-md font-bold truncate">Case #7481 - M, 60y</p>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Laceration - 15 min ETA</p>
+</div>
+<span class="text-on-surface-variant font-bold text-[10px] uppercase">Urgent</span>
+</div>
+</div>
+<button class="w-full mt-lg border border-outline text-on-surface-variant py-sm rounded-lg text-label-md font-label-md hover:bg-surface-variant transition-colors">View All Incoming</button>
+</div>
+<!-- Dispatch / Map -->
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col gap-md">
+<div class="flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md">Active Dispatch</h3>
+<button class="text-primary font-bold text-[12px] hover:underline">View Map</button>
+</div>
+<div class="relative h-48 rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover grayscale brightness-75" data-location="New York" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBV5V4pMJWMAX_oP5BytY8LqID6bc6eyHJ-AbXAgl-Gpy3Aqz-bQpdX8J2b4Fsf_E2qM-K-A5z6FUw9BI4dzjMa-XwEpb8GJFyLuhTavyDNR9CzjzNqKvQpzTH7c1PbZrLhMPxhNsGLZn8Nik9ozUST5y8HsK5iIlXbN2dDdl548P1qHuYlApSxwIldjSOZp46WjrKwaGxTM-NBCTRDqubTPkkh8FNLARA_xoPlIOiekXiW_F1ZZKAxbrzpZLY8bsBY8WK6IIknxueM"/>
+<div class="absolute inset-0 bg-primary/10"></div>
+<!-- Map Markers Mockup -->
+<div class="absolute top-1/4 left-1/3 text-error status-pulse">
+<span class="material-symbols-outlined text-[32px]" style="font-variation-settings: 'FILL' 1;">location_on</span>
+</div>
+<div class="absolute bottom-1/3 right-1/4 text-primary">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">ambulance</span>
+</div>
+</div>
+<div class="flex justify-between items-center px-sm">
+<div class="text-center">
+<p class="text-display-lg font-display-lg leading-none">08</p>
+<p class="text-[10px] uppercase font-bold text-on-surface-variant">Units Out</p>
+</div>
+<div class="h-8 w-px bg-outline-variant"></div>
+<div class="text-center">
+<p class="text-display-lg font-display-lg leading-none">02</p>
+<p class="text-[10px] uppercase font-bold text-on-surface-variant">Units Avail.</p>
+</div>
+<div class="h-8 w-px bg-outline-variant"></div>
+<button class="bg-primary text-on-primary px-md py-sm rounded-lg font-label-md text-label-md">Dispatch</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Action Bar (Mobile only or additional bottom row) -->
+<div class="lg:hidden grid grid-cols-1 gap-md mb-xl">
+<button class="bg-primary text-on-primary w-full py-md rounded-xl font-headline-md text-headline-md shadow-lg">Register Emergency Case</button>
+<button class="bg-error text-on-error w-full py-md rounded-xl font-headline-md text-headline-md shadow-lg">Mass Casualty Alert</button>
+</div>
+</div>
+</main>
+<!-- FAB for quick Case Registration (Desktop) -->
+<button class="fixed bottom-lg right-lg w-14 h-14 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-50 md:hidden">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">add</span>
+</button>
+<script>
+        // Simple Micro-interactions for live dashboard feel
+        document.addEventListener('DOMContentLoaded', () => {
+            // Simulated live data updates
+            const updateTime = () => {
+                const now = new Date();
+                // Potential live clock in header if needed
+            };
+            setInterval(updateTime, 1000);
+
+            // Click handling for bays
+            const bays = document.querySelectorAll('.aspect-video');
+            bays.forEach(bay => {
+                bay.addEventListener('click', () => {
+                    const bayName = bay.querySelector('span:first-child').innerText;
+                    console.log(`Action: Open details for ${bayName}`);
+                    bay.classList.add('ring-2', 'ring-primary');
+                    setTimeout(() => bay.classList.remove('ring-2', 'ring-primary'), 500);
+                });
+            });
+        });
+    </script>
+</body></html>

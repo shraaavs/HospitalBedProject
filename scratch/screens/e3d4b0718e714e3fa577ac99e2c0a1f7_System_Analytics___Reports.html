@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MediFlow Central | Analytics &amp; Reporting</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .chart-container {
+            position: relative;
+            background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(248,250,252,1) 100%);
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 24px;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "error-container": "#ffdad6",
+                      "surface-bright": "#f7f9fb",
+                      "on-tertiary-fixed": "#0b1c30",
+                      "on-secondary-container": "#004b69",
+                      "inverse-surface": "#2d3133",
+                      "on-secondary-fixed-variant": "#004c6b",
+                      "tertiary-fixed": "#d3e4fe",
+                      "inverse-primary": "#a9c7ff",
+                      "tertiary-fixed-dim": "#b7c8e1",
+                      "surface-container": "#eceef0",
+                      "secondary-fixed-dim": "#81cfff",
+                      "on-primary-fixed": "#001b3d",
+                      "on-error": "#ffffff",
+                      "surface": "#f7f9fb",
+                      "secondary": "#00658d",
+                      "primary-fixed": "#d6e3ff",
+                      "on-primary": "#ffffff",
+                      "background": "#f7f9fb",
+                      "surface-variant": "#e0e3e5",
+                      "surface-container-high": "#e6e8ea",
+                      "outline-variant": "#c2c6d4",
+                      "on-surface": "#191c1e",
+                      "outline": "#727783",
+                      "on-tertiary": "#ffffff",
+                      "primary-container": "#005eb8",
+                      "secondary-container": "#41befd",
+                      "tertiary-container": "#506076",
+                      "surface-tint": "#005db6",
+                      "on-tertiary-fixed-variant": "#38485d",
+                      "on-primary-fixed-variant": "#00468c",
+                      "on-background": "#191c1e",
+                      "on-error-container": "#93000a",
+                      "inverse-on-surface": "#eff1f3",
+                      "on-secondary": "#ffffff",
+                      "on-surface-variant": "#424752",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary-container": "#cadbf5",
+                      "surface-container-low": "#f2f4f6",
+                      "surface-container-highest": "#e0e3e5",
+                      "error": "#ba1a1a",
+                      "primary-fixed-dim": "#a9c7ff",
+                      "on-primary-container": "#c8daff",
+                      "tertiary": "#39485e",
+                      "primary": "#00478d",
+                      "on-secondary-fixed": "#001e2d",
+                      "surface-dim": "#d8dadc",
+                      "secondary-fixed": "#c6e7ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin-mobile": "16px",
+                      "margin-desktop": "32px",
+                      "xs": "8px",
+                      "sm": "12px",
+                      "base": "4px",
+                      "xl": "32px",
+                      "md": "16px",
+                      "lg": "24px",
+                      "gutter": "20px"
+              },
+              "fontFamily": {
+                      "headline-lg": ["Inter"],
+                      "data-mono": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "label-md": ["Inter"],
+                      "body-sm": ["Inter"],
+                      "body-md": ["Inter"],
+                      "display-lg": ["Inter"],
+                      "headline-md": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "display-lg": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen">
+<!-- SideNavBar (Predicted Component) -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container-lowest border-r border-outline-variant shadow-sm flex flex-col py-lg z-50">
+<div class="px-lg mb-xl">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-headline-md" style="font-variation-settings: 'FILL' 1;">domain</span>
+<div class="flex flex-col">
+<span class="text-headline-md font-headline-md font-bold text-primary">MediFlow</span>
+<span class="text-label-md text-on-surface-variant opacity-70">City General Hospital</span>
+</div>
+</div>
+</div>
+<nav class="flex-1 flex flex-col px-md gap-base">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">domain</span>
+<span class="font-body-md">Ward Overview</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">bed</span>
+<span class="font-body-md">Bed Management</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">transfer_within_a_station</span>
+<span class="font-body-md">Patient Flow</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-body-md">Staffing</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-primary bg-primary-container/10 border-r-4 border-primary transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span class="font-body-md font-bold">Analytics</span>
+</a>
+</nav>
+<div class="mt-auto px-lg pt-lg border-t border-outline-variant">
+<div class="flex items-center gap-sm p-sm rounded-lg hover:bg-surface-container-high transition-all cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-primary-fixed-dim flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A clean, professional headshot of a middle-aged hospital administrator in a clinical setting with soft natural light, wearing a modern blue suit. The background is a slightly blurred, high-tech hospital corridor with white and blue lighting, emphasizing a clean and authoritative healthcare environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7FCPSwN-jOq3IKfPZAaMSXsyKeKa2cl7yK3qbdG5J9mu-W9P98wzTzcV7VJmxhGEltk9qdn9z-UyCeoRY_CS2tcTts0w66nY13c0gRoHpv0gr403Cyl2SKTQKxsxjKIuFevgrWewmumDaVR2ZMC49AB_ibjYm96CgRxcgX77ZPOcPcgW0vsT0RM4uS8m3kAYsYKxah-MKB_rbRo-k0y13SB3qAfewQ5eLUog1CYcqILOsOUsRhz60Wy4Ncm7Qdb4A_sYHO7SQYjfe"/>
+</div>
+<div class="flex flex-col">
+<span class="text-body-sm font-bold text-on-surface">Admin User</span>
+<span class="text-label-md text-on-surface-variant">Chief Operations</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar (Predicted Component) -->
+<header class="flex justify-between items-center w-full px-margin-desktop py-xs ml-64 max-w-[calc(100%-16rem)] sticky top-0 bg-surface-bright shadow-sm z-40">
+<div class="flex items-center gap-lg">
+<h1 class="text-headline-md font-headline-md font-extrabold text-primary">MediFlow Central</h1>
+<div class="relative w-96">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-body-md focus:ring-2 focus:ring-primary outline-none transition-all" placeholder="Search reports, metrics, or departments..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="p-2 hover:bg-surface-container-low rounded-full transition-all relative">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 hover:bg-surface-container-low rounded-full transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">settings</span>
+</button>
+<button class="p-2 hover:bg-surface-container-low rounded-full transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">help</span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant mx-2"></div>
+<div class="flex items-center gap-xs cursor-pointer px-sm py-xs hover:bg-surface-container-low rounded-lg transition-all">
+<span class="text-body-md font-bold">24 Oct, 2023</span>
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 p-margin-desktop min-h-[calc(100vh-64px)]">
+<!-- Action Bar & Controls -->
+<section class="mb-xl flex flex-wrap items-end justify-between gap-lg">
+<div>
+<h2 class="text-display-lg font-display-lg text-on-surface">Analytics &amp; Reporting</h2>
+<p class="text-body-lg text-on-surface-variant">Comprehensive clinical performance and resource overview.</p>
+</div>
+<div class="flex items-center gap-sm bg-surface-container-lowest p-xs rounded-xl shadow-sm border border-outline-variant">
+<div class="flex items-center gap-xs px-md py-sm rounded-lg bg-surface-container-high cursor-pointer hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-[20px]">calendar_month</span>
+<span class="text-body-md font-bold">Last 30 Days</span>
+</div>
+<div class="h-6 w-[1px] bg-outline-variant"></div>
+<button class="flex items-center gap-xs px-md py-sm rounded-lg bg-primary text-on-primary hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[20px]">download</span>
+<span class="text-body-md font-bold">Export Report</span>
+</button>
+<button class="flex items-center justify-center w-10 h-10 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</section>
+<!-- Summary Cards Bento -->
+<section class="bento-grid mb-xl">
+<!-- Summary 1: Avg Length of Stay -->
+<div class="col-span-12 md:col-span-3 glass-card p-lg rounded-xl shadow-sm border border-outline-variant hover:shadow-md transition-all">
+<div class="flex justify-between items-start mb-md">
+<div class="p-xs bg-primary-container/10 rounded-lg text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">timer</span>
+</div>
+<span class="text-label-md text-green-600 bg-green-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">trending_down</span> 4.2%
+                    </span>
+</div>
+<h3 class="text-label-md text-on-surface-variant mb-xs">Avg Length of Stay</h3>
+<div class="flex items-baseline gap-xs">
+<span class="text-display-lg font-display-lg text-on-surface">5.4</span>
+<span class="text-body-md text-on-surface-variant">days</span>
+</div>
+<p class="text-label-md text-on-surface-variant mt-sm">Vs. 5.7 days last month</p>
+</div>
+<!-- Summary 2: Discharge Rate -->
+<div class="col-span-12 md:col-span-3 glass-card p-lg rounded-xl shadow-sm border border-outline-variant hover:shadow-md transition-all">
+<div class="flex justify-between items-start mb-md">
+<div class="p-xs bg-secondary-container/10 rounded-lg text-secondary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">door_open</span>
+</div>
+<span class="text-label-md text-green-600 bg-green-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">trending_up</span> 1.8%
+                    </span>
+</div>
+<h3 class="text-label-md text-on-surface-variant mb-xs">Discharge Rate</h3>
+<div class="flex items-baseline gap-xs">
+<span class="text-display-lg font-display-lg text-on-surface">88.2</span>
+<span class="text-body-md text-on-surface-variant">%</span>
+</div>
+<p class="text-label-md text-on-surface-variant mt-sm">92 patients today</p>
+</div>
+<!-- Summary 3: Daily Admissions -->
+<div class="col-span-12 md:col-span-3 glass-card p-lg rounded-xl shadow-sm border border-outline-variant hover:shadow-md transition-all">
+<div class="flex justify-between items-start mb-md">
+<div class="p-xs bg-tertiary-container/10 rounded-lg text-tertiary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person_add</span>
+</div>
+<span class="text-label-md text-error bg-error-container/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">trending_up</span> 12%
+                    </span>
+</div>
+<h3 class="text-label-md text-on-surface-variant mb-xs">Daily Admissions</h3>
+<div class="flex items-baseline gap-xs">
+<span class="text-display-lg font-display-lg text-on-surface">114</span>
+<span class="text-body-md text-on-surface-variant">patients</span>
+</div>
+<p class="text-label-md text-on-surface-variant mt-sm">Higher than seasonal avg</p>
+</div>
+<!-- Summary 4: Staff-to-Patient -->
+<div class="col-span-12 md:col-span-3 glass-card p-lg rounded-xl shadow-sm border border-outline-variant hover:shadow-md transition-all">
+<div class="flex justify-between items-start mb-md">
+<div class="p-xs bg-primary-container/10 rounded-lg text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">medical_services</span>
+</div>
+<span class="text-label-md text-on-surface-variant bg-surface-container-high px-2 py-0.5 rounded-full flex items-center gap-1">
+                        Stable
+                    </span>
+</div>
+<h3 class="text-label-md text-on-surface-variant mb-xs">Staff-to-Patient Ratio</h3>
+<div class="flex items-baseline gap-xs">
+<span class="text-display-lg font-display-lg text-on-surface">1:4.2</span>
+</div>
+<p class="text-label-md text-on-surface-variant mt-sm">Optimum range (1:4 - 1:6)</p>
+</div>
+</section>
+<!-- Charts and Detailed Data -->
+<div class="grid grid-cols-12 gap-xl">
+<!-- Bed Occupancy Line Chart -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm">
+<div class="flex justify-between items-center mb-xl">
+<div>
+<h3 class="text-headline-md font-headline-md text-on-surface">Bed Occupancy Trends</h3>
+<p class="text-body-sm text-on-surface-variant">Hourly capacity distribution across all wards</p>
+</div>
+<div class="flex gap-sm">
+<div class="flex items-center gap-xs">
+<span class="w-3 h-3 rounded-full bg-primary"></span>
+<span class="text-label-md">Current</span>
+</div>
+<div class="flex items-center gap-xs">
+<span class="w-3 h-3 rounded-full bg-outline-variant"></span>
+<span class="text-label-md">Last Week</span>
+</div>
+</div>
+</div>
+<div class="h-64 chart-container flex items-end justify-between px-xs">
+<!-- Stylized SVG Line Chart Mock -->
+<div class="absolute inset-0 flex flex-col justify-between py-xs pointer-events-none opacity-30">
+<div class="border-t border-dashed border-outline"></div>
+<div class="border-t border-dashed border-outline"></div>
+<div class="border-t border-dashed border-outline"></div>
+<div class="border-t border-dashed border-outline"></div>
+</div>
+<div class="relative w-full h-full">
+<svg class="w-full h-full overflow-visible" viewbox="0 0 800 200">
+<!-- Background Path (Last Week) -->
+<path d="M0 150 Q100 140 200 160 T400 130 T600 150 T800 140" fill="none" stroke="#c2c6d4" stroke-dasharray="4" stroke-width="2"></path>
+<!-- Active Path (Current) -->
+<path d="M0 120 Q100 100 200 130 T400 80 T600 110 T800 90" fill="none" stroke="#00478d" stroke-linecap="round" stroke-width="4"></path>
+<!-- Area Fill -->
+<path d="M0 120 Q100 100 200 130 T400 80 T600 110 T800 90 L800 200 L0 200 Z" fill="url(#gradient-primary)" opacity="0.1"></path>
+<defs>
+<lineargradient id="gradient-primary" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#00478d"></stop>
+<stop offset="100%" stop-color="#00478d" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<!-- Data points -->
+<circle cx="400" cy="80" fill="#00478d" r="6"></circle>
+</svg>
+<!-- Chart Tooltip Mock -->
+<div class="absolute top-[40px] left-[360px] bg-inverse-surface text-inverse-on-surface px-sm py-xs rounded shadow-lg text-label-md z-10">
+                            12:00 PM: 94% Occupancy
+                        </div>
+</div>
+</div>
+<div class="flex justify-between mt-sm px-xs">
+<span class="text-label-md text-on-surface-variant">00:00</span>
+<span class="text-label-md text-on-surface-variant">06:00</span>
+<span class="text-label-md text-on-surface-variant font-bold text-primary">12:00</span>
+<span class="text-label-md text-on-surface-variant">18:00</span>
+<span class="text-label-md text-on-surface-variant">23:59</span>
+</div>
+</div>
+<!-- Resource Utilization Pie/Donut -->
+<div class="col-span-12 lg:col-span-4 bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col">
+<h3 class="text-headline-md font-headline-md text-on-surface mb-xs">Resource Utilization</h3>
+<p class="text-body-sm text-on-surface-variant mb-xl">Equipment and facility usage</p>
+<div class="flex-1 flex flex-col items-center justify-center relative">
+<!-- CSS Donut Chart -->
+<div class="relative w-48 h-48 rounded-full border-[16px] border-surface-container-high" style="background: conic-gradient(#00478d 0% 45%, #41befd 45% 75%, #ba1a1a 75% 100%);">
+<div class="absolute inset-0 m-2 rounded-full bg-surface-container-lowest flex flex-col items-center justify-center">
+<span class="text-headline-lg font-headline-lg text-on-surface">82%</span>
+<span class="text-label-md text-on-surface-variant">Total Capacity</span>
+</div>
+</div>
+<div class="w-full mt-xl grid grid-cols-2 gap-md">
+<div class="flex items-center gap-xs">
+<span class="w-3 h-3 rounded-full bg-primary"></span>
+<div class="flex flex-col">
+<span class="text-label-md font-bold">Standard Bed</span>
+<span class="text-label-md text-on-surface-variant">45% Usage</span>
+</div>
+</div>
+<div class="flex items-center gap-xs">
+<span class="w-3 h-3 rounded-full bg-secondary-container"></span>
+<div class="flex flex-col">
+<span class="text-label-md font-bold">ICU Support</span>
+<span class="text-label-md text-on-surface-variant">30% Usage</span>
+</div>
+</div>
+<div class="flex items-center gap-xs">
+<span class="w-3 h-3 rounded-full bg-error"></span>
+<div class="flex flex-col">
+<span class="text-label-md font-bold">Emergency</span>
+<span class="text-label-md text-on-surface-variant">25% Usage</span>
+</div>
+</div>
+<div class="flex items-center gap-xs">
+<span class="w-3 h-3 rounded-full bg-surface-container-high"></span>
+<div class="flex flex-col">
+<span class="text-label-md font-bold">Idle/Repair</span>
+<span class="text-label-md text-on-surface-variant">18% Available</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Detailed Reports Data Table -->
+<div class="col-span-12 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+<div class="p-lg border-b border-outline-variant flex justify-between items-center bg-surface-bright">
+<h3 class="text-headline-md font-headline-md text-on-surface">Recent Reports Queue</h3>
+<div class="flex gap-sm">
+<button class="flex items-center gap-xs px-md py-sm rounded-lg border border-outline-variant bg-surface-container-lowest hover:bg-surface-container-low transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+<span class="text-body-sm font-bold">Filter By Type</span>
+</button>
+<button class="flex items-center gap-xs px-md py-sm rounded-lg border border-outline-variant bg-surface-container-lowest hover:bg-surface-container-low transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">history</span>
+<span class="text-body-sm font-bold">History</span>
+</button>
+</div>
+</div>
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50 text-label-md text-on-surface-variant border-b border-outline-variant">
+<th class="px-lg py-md font-semibold uppercase tracking-wider">Report Name</th>
+<th class="px-lg py-md font-semibold uppercase tracking-wider text-center">Data Range</th>
+<th class="px-lg py-md font-semibold uppercase tracking-wider text-center">Status</th>
+<th class="px-lg py-md font-semibold uppercase tracking-wider text-center">Size</th>
+<th class="px-lg py-md font-semibold uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="text-body-md text-on-surface">
+<tr class="border-b border-outline-variant hover:bg-primary/5 transition-colors">
+<td class="px-lg py-md">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center text-red-600">
+<span class="material-symbols-outlined">picture_as_pdf</span>
+</div>
+<div class="flex flex-col">
+<span class="font-bold">Bed_Occupancy_Q3_Summary.pdf</span>
+<span class="text-body-sm text-on-surface-variant">Generated by System • 2m ago</span>
+</div>
+</div>
+</td>
+<td class="px-lg py-md text-center">Jul 01 - Sep 30, 2023</td>
+<td class="px-lg py-md text-center">
+<span class="bg-green-100 text-green-700 px-sm py-xs rounded-full text-label-md font-bold">Ready</span>
+</td>
+<td class="px-lg py-md text-center text-on-surface-variant">4.2 MB</td>
+<td class="px-lg py-md text-right">
+<div class="flex justify-end gap-xs">
+<button class="p-2 hover:bg-surface-container-high rounded-lg transition-all text-primary" title="Download">
+<span class="material-symbols-outlined">download</span>
+</button>
+<button class="p-2 hover:bg-surface-container-high rounded-lg transition-all text-on-surface-variant" title="Share">
+<span class="material-symbols-outlined">share</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="border-b border-outline-variant hover:bg-primary/5 transition-colors">
+<td class="px-lg py-md">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center text-green-600">
+<span class="material-symbols-outlined">table_chart</span>
+</div>
+<div class="flex flex-col">
+<span class="font-bold">Daily_Admission_Log_Oct24.xlsx</span>
+<span class="text-body-sm text-on-surface-variant">Requested by Dr. Smith • 45m ago</span>
+</div>
+</div>
+</td>
+<td class="px-lg py-md text-center">Oct 24, 2023</td>
+<td class="px-lg py-md text-center">
+<span class="bg-green-100 text-green-700 px-sm py-xs rounded-full text-label-md font-bold">Ready</span>
+</td>
+<td class="px-lg py-md text-center text-on-surface-variant">842 KB</td>
+<td class="px-lg py-md text-right">
+<div class="flex justify-end gap-xs">
+<button class="p-2 hover:bg-surface-container-high rounded-lg transition-all text-primary" title="Download">
+<span class="material-symbols-outlined">download</span>
+</button>
+<button class="p-2 hover:bg-surface-container-high rounded-lg transition-all text-on-surface-variant" title="Share">
+<span class="material-symbols-outlined">share</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="border-b border-outline-variant hover:bg-primary/5 transition-colors">
+<td class="px-lg py-md">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">monitoring</span>
+</div>
+<div class="flex flex-col">
+<span class="font-bold">Staff_Efficiency_Audit_W42.pdf</span>
+<span class="text-body-sm text-on-surface-variant">Weekly Automated Sync • 3h ago</span>
+</div>
+</div>
+</td>
+<td class="px-lg py-md text-center">Oct 16 - Oct 22, 2023</td>
+<td class="px-lg py-md text-center">
+<span class="bg-primary-container/10 text-primary px-sm py-xs rounded-full text-label-md font-bold animate-pulse">Processing</span>
+</td>
+<td class="px-lg py-md text-center text-on-surface-variant">--</td>
+<td class="px-lg py-md text-right">
+<div class="flex justify-end gap-xs">
+<button class="p-2 opacity-30 cursor-not-allowed" disabled="">
+<span class="material-symbols-outlined">download</span>
+</button>
+<button class="p-2 hover:bg-surface-container-high rounded-lg transition-all text-on-surface-variant">
+<span class="material-symbols-outlined">cancel</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="p-md flex justify-center bg-surface-container-lowest">
+<button class="text-primary font-bold text-body-sm hover:underline">View All Generated Reports</button>
+</div>
+</div>
+</div>
+<!-- Real-Time Capacity Bar Section -->
+<section class="mt-xl bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm">
+<h3 class="text-headline-md font-headline-md text-on-surface mb-lg">Live Capacity Overview</h3>
+<div class="space-y-lg">
+<div>
+<div class="flex justify-between items-center mb-xs">
+<span class="text-body-md font-bold">General Ward - East Wing</span>
+<span class="text-body-sm text-on-surface-variant">42 / 50 Beds Occupied (84%)</span>
+</div>
+<div class="w-full h-4 bg-surface-container-high rounded-full overflow-hidden flex">
+<div class="h-full bg-error" style="width: 70%;"></div> <!-- Occupied -->
+<div class="h-full bg-secondary-container" style="width: 14%;"></div> <!-- Cleaning -->
+<div class="h-full bg-green-500" style="width: 16%;"></div> <!-- Available -->
+</div>
+</div>
+<div>
+<div class="flex justify-between items-center mb-xs">
+<span class="text-body-md font-bold">ICU - Level 4</span>
+<span class="text-body-sm text-on-surface-variant">18 / 20 Beds Occupied (90%)</span>
+</div>
+<div class="w-full h-4 bg-surface-container-high rounded-full overflow-hidden flex">
+<div class="h-full bg-error" style="width: 85%;"></div>
+<div class="h-full bg-secondary-container" style="width: 5%;"></div>
+<div class="h-full bg-green-500" style="width: 10%;"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-center mb-xs">
+<span class="text-body-md font-bold">Pediatric Unit</span>
+<span class="text-body-sm text-on-surface-variant">12 / 30 Beds Occupied (40%)</span>
+</div>
+<div class="w-full h-4 bg-surface-container-high rounded-full overflow-hidden flex">
+<div class="h-full bg-error" style="width: 35%;"></div>
+<div class="h-full bg-secondary-container" style="width: 5%;"></div>
+<div class="h-full bg-green-500" style="width: 60%;"></div>
+</div>
+</div>
+</div>
+<div class="mt-lg flex gap-lg border-t border-outline-variant pt-md">
+<div class="flex items-center gap-xs">
+<span class="w-3 h-3 rounded-sm bg-error"></span>
+<span class="text-label-md text-on-surface-variant">Occupied</span>
+</div>
+<div class="flex items-center gap-xs">
+<span class="w-3 h-3 rounded-sm bg-secondary-container"></span>
+<span class="text-label-md text-on-surface-variant">Cleaning/Prep</span>
+</div>
+<div class="flex items-center gap-xs">
+<span class="w-3 h-3 rounded-sm bg-green-500"></span>
+<span class="text-label-md text-on-surface-variant">Available</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Micro-interaction Scripts -->
+<script>
+        // Add a subtle entrance animation for cards
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.glass-card, .bg-surface-container-lowest');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(10px)';
+                card.style.transition = 'all 0.4s ease-out';
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 50);
+            });
+        });
+
+        // Toggle search bar focus effect
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('w-[480px]');
+            searchInput.parentElement.classList.remove('w-96');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.add('w-96');
+            searchInput.parentElement.classList.remove('w-[480px]');
+        });
+    </script>
+</body></html>
