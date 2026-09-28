@@ -18,29 +18,140 @@ router.get('/patient/:patientId', protect, requireRole(['Doctor', 'Nurse', 'Admi
   }
 });
 
-// POST a new medical record (vitals, diagnosis, etc)
-// Accessible by Doctor, Nurse
-router.post('/', protect, requireRole(['Doctor', 'Nurse']), async (req, res) => {
-  const { patientId, vitals, diagnosis, treatment, notes } = req.body;
+// POST a new medical record / clinical consultation (with full clinical parameters)
+// Accessible by Doctor, Nurse, Admin
+router.post('/', protect, requireRole(['Doctor', 'Nurse', 'Admin']), async (req, res) => {
+  const { 
+    patientId, 
+    patientCustomId,
+    appointmentId,
+    consultationDate,
+    chiefComplaint,
+    symptoms,
+    durationOfSymptoms,
+    presentIllness,
+    relevantMedicalHistory,
+    allergies,
+    currentMedications,
+    clinicalObservations,
+    diagnosis,
+    diagnosisNotes,
+    severity,
+    treatmentPlan,
+    treatment,
+    recommendedTests,
+    doctorsMedicalNotes,
+    notes,
+    followUpInstructions,
+    vitals, 
+    prescriptions,
+    labRequests
+  } = req.body;
+
   try {
-    const patient = await Patient.findById(patientId);
-    if (!patient) {
-      return res.status(404).json({ message: 'Patient not found' });
+    let patient = null;
+    const mongoose = (await import('mongoose')).default;
+    
+    if (patientId && mongoose.Types.ObjectId.isValid(patientId)) {
+      patient = await Patient.findById(patientId);
+    }
+    if (!patient && (patientCustomId || patientId)) {
+      const searchPid = patientCustomId || patientId;
+      patient = await Patient.findOne({
+        $or: [
+          { patientId: searchPid },
+          { patientCustomId: searchPid },
+          { fullName: searchPid },
+          { name: searchPid }
+        ]
+      });
     }
 
+    if (!patient) {
+      // Create lightweight patient record if saving a standalone emergency/appointment consultation
+      patient = new Patient({
+        fullName: req.body.patientName || 'Consultation Patient',
+        patientId: patientCustomId || `P${Date.now().toString().slice(-5)}`,
+        status: 'Outpatient',
+        gender: req.body.gender || 'Other',
+        age: req.body.age ? Number(req.body.age) : 35,
+        phoneNumber: req.body.phoneNumber || 'N/A'
+      });
+      await patient.save();
+    }
+
+    const finalPatientId = patient._id;
+    const finalPatientCustomId = patient.patientId || patientCustomId || '';
+
     const newRecord = new MedicalRecord({
-      patientId,
+      patientId: finalPatientId,
+      patientCustomId: finalPatientCustomId,
       recordedBy: req.user._id,
-      vitals,
-      diagnosis,
-      treatment,
-      notes
+      doctorId: req.user._id,
+      doctorName: req.user.name || '',
+      appointmentId: appointmentId || null,
+      consultationDate: consultationDate ? new Date(consultationDate) : new Date(),
+      chiefComplaint: chiefComplaint || '',
+      symptoms: symptoms || '',
+      durationOfSymptoms: durationOfSymptoms || '',
+      presentIllness: presentIllness || '',
+      relevantMedicalHistory: relevantMedicalHistory || '',
+      allergies: Array.isArray(allergies) ? allergies : (allergies ? [allergies] : []),
+      currentMedications: currentMedications || '',
+      clinicalObservations: clinicalObservations || '',
+      diagnosis: diagnosis || '',
+      diagnosisNotes: diagnosisNotes || '',
+      severity: severity || 'Moderate',
+      treatmentPlan: treatmentPlan || treatment || '',
+      treatment: treatment || treatmentPlan || '',
+      recommendedTests: Array.isArray(recommendedTests) ? recommendedTests : [],
+      doctorsMedicalNotes: doctorsMedicalNotes || notes || '',
+      notes: notes || doctorsMedicalNotes || '',
+      followUpInstructions: followUpInstructions || '',
+      vitals: vitals || {},
+      prescriptions: Array.isArray(prescriptions) ? prescriptions : [],
+      labRequests: Array.isArray(labRequests) ? labRequests : []
     });
 
     const savedRecord = await newRecord.save();
-    res.status(201).json(savedRecord);
+
+    // If linked to an appointment, update appointment status to Completed with notes
+    if (appointmentId) {
+      try {
+        const Appointment = (await import('../models/Appointment.js')).default;
+        await Appointment.findByIdAndUpdate(appointmentId, {
+          status: 'Completed',
+          endTime: new Date(),
+          consultationNotes: {
+            diagnosis: diagnosis || '',
+            treatment: treatmentPlan || treatment || '',
+            notes: doctorsMedicalNotes || notes || '',
+            prescriptions: Array.isArray(prescriptions) ? prescriptions.map(p => typeof p === 'string' ? p : `${p.medication} (${p.dosage})`) : [],
+            completedAt: new Date()
+          }
+        });
+      } catch (appErr) {
+        console.warn('Could not auto-complete appointment:', appErr.message);
+      }
+    }
+
+    // Sync any new allergies to Patient record if applicable
+    if (patient && Array.isArray(allergies) && allergies.length > 0) {
+      patient.clinicalInfo = patient.clinicalInfo || {};
+      const existing = patient.clinicalInfo.allergies || [];
+      const merged = Array.from(new Set([...existing, ...allergies]));
+      patient.clinicalInfo.allergies = merged;
+      await patient.save().catch(() => null);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Consultation recorded and stored in patient medical history.',
+      record: savedRecord
+    });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error('Error saving medical record / consultation:', err);
+    res.status(400).json({ success: false, message: err.message });
   }
 });
 // POST a diagnosis to an existing record

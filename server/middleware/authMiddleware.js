@@ -1,7 +1,22 @@
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+import Admin from '../models/Admin.js';
+import Doctor from '../models/Doctor.js';
+import Nurse from '../models/Nurse.js';
+import Receptionist from '../models/Receptionist.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret_hospitalbed_key';
+const getJwtSecret = () => process.env.JWT_SECRET || 'supersecret_hospitalbed_key';
+
+const getModelByRole = (role) => {
+  if (!role) return null;
+  const normalized = role.trim().toLowerCase();
+  switch (normalized) {
+    case 'admin': return Admin;
+    case 'doctor': return Doctor;
+    case 'nurse': return Nurse;
+    case 'receptionist': return Receptionist;
+    default: return null;
+  }
+};
 
 export const protect = async (req, res, next) => {
   let token;
@@ -14,31 +29,64 @@ export const protect = async (req, res, next) => {
       // Get token from header
       token = req.headers.authorization.split(' ')[1];
 
+      if (!token || token === 'null' || token === 'undefined') {
+        return res.status(401).json({ message: 'Not authorized, token is missing or empty' });
+      }
+
       // Verify token
-      const decoded = jwt.verify(token, JWT_SECRET);
+      const decoded = jwt.verify(token, getJwtSecret());
 
-      // Get user from the token
-      req.user = await User.findById(decoded.id).select('-password');
+      let Model = getModelByRole(decoded.role);
+      if (Model) {
+        req.user = await Model.findById(decoded.id).select('-password');
+      }
 
-      next();
+      // Fallback search across models if not found by primary role
+      if (!req.user) {
+        req.user = await Receptionist.findById(decoded.id).select('-password');
+      }
+      if (!req.user) {
+        req.user = await Admin.findById(decoded.id).select('-password');
+      }
+      if (!req.user) {
+        req.user = await Doctor.findById(decoded.id).select('-password');
+      }
+      if (!req.user) {
+        req.user = await Nurse.findById(decoded.id).select('-password');
+      }
+
+      if (!req.user) {
+        return res.status(401).json({ message: 'Not authorized, user account not found or session expired' });
+      }
+
+      return next();
     } catch (error) {
-      console.error(error);
-      res.status(401).json({ message: 'Not authorized, token failed' });
+      console.error('JWT Verification Error:', error.message);
+      return res.status(401).json({ 
+        message: error.name === 'TokenExpiredError' 
+          ? 'Your session has expired. Please log in again.' 
+          : 'Not authorized, token failed: ' + error.message 
+      });
     }
   }
 
-  if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token' });
-  }
+  return res.status(401).json({ message: 'Not authorized, no token provided' });
 };
 
-// Admin only middleware (and other role specific arrays)
+// Role specific verification (case-insensitive)
 export const requireRole = (roles) => {
   return (req, res, next) => {
-    if (req.user && roles.includes(req.user.role)) {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+    const userRole = (req.user.role || '').toLowerCase();
+    const allowedRoles = roles.map(r => r.toLowerCase());
+
+    if (allowedRoles.includes(userRole)) {
       next();
     } else {
-      res.status(403).json({ message: 'Access denied: insufficient permissions' });
+      res.status(403).json({ message: 'Access denied: insufficient permissions for role ' + req.user.role });
     }
   };
 };
+

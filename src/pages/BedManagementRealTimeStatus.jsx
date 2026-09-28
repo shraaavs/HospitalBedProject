@@ -1,15 +1,24 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
 export default function BedManagementRealTimeStatus() {
+  const [searchParams] = useSearchParams();
   const [beds, setBeds] = useState([]);
   const [stats, setStats] = useState(null);
   
   const [wardFilter, setWardFilter] = useState('All Wards');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || searchParams.get('bedNumber') || '');
   
   const [userRole, setUserRole] = useState('Staff');
+
+  useEffect(() => {
+    const s = searchParams.get('search') || searchParams.get('bedNumber') || '';
+    if (s && s !== searchQuery) {
+      setSearchQuery(s);
+    }
+  }, [searchParams]);
 
   // Modal States
   const [allocateModal, setAllocateModal] = useState({ isOpen: false, bedId: null, bedNumber: '' });
@@ -22,13 +31,58 @@ export default function BedManagementRealTimeStatus() {
   const [reserveData, setReserveData] = useState({ patientId: '', expectedAdmission: '', reason: '' });
   const [transferData, setTransferData] = useState({ toBedId: '', reason: '' });
   
+  const [mainTab, setMainTab] = useState('all'); // 'all' | 'pending-transfers' | 'available' | 'occupied' | 'history'
+  const [pendingTransfers, setPendingTransfers] = useState([]);
+  const [transferHistory, setTransferHistory] = useState([]);
+  const [transfersLoading, setTransfersLoading] = useState(false);
+  
   const [bedDetails, setBedDetails] = useState(null);
+  const [viewMode, setViewMode] = useState('table'); // 'table' | 'grid'
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Filter beds based on main tab
+  const displayedBeds = beds.filter(b => {
+    if (mainTab === 'available') return b.status === 'Available';
+    if (mainTab === 'occupied') return b.status === 'Occupied';
+    return true;
+  });
+
+  // Compute pagination
+  const totalPages = Math.ceil(displayedBeds.length / itemsPerPage) || 1;
+  const paginatedBeds = displayedBeds.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   useEffect(() => {
     const role = localStorage.getItem('userRole');
     if (role) setUserRole(role);
     fetchData();
-  }, [wardFilter, statusFilter, searchQuery]);
+    fetchTransfersData();
+  }, [wardFilter, statusFilter, searchQuery, mainTab]);
+
+  const fetchTransfersData = async () => {
+    try {
+      setTransfersLoading(true);
+      const headers = { 'Authorization': `Bearer ${localStorage.getItem('userToken')}` };
+      const [pendingRes, allOrdersRes] = await Promise.all([
+        fetch('/api/transfer-discharge?type=Transfer&status=Doctor Approved', { headers }).catch(() => ({ ok: false })),
+        fetch('/api/transfer-discharge?type=Transfer', { headers }).catch(() => ({ ok: false }))
+      ]);
+
+      if (pendingRes.ok) {
+        const pData = await pendingRes.json();
+        setPendingTransfers(pData.discharges || pData.records || []);
+      }
+      if (allOrdersRes.ok) {
+        const aData = await allOrdersRes.json();
+        const records = aData.discharges || aData.records || [];
+        setTransferHistory(records.filter(r => r.status === 'Completed' || r.status === 'Transferred'));
+      }
+    } catch (err) {
+      console.error('Error fetching transfers:', err);
+    } finally {
+      setTransfersLoading(false);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -180,196 +234,577 @@ export default function BedManagementRealTimeStatus() {
           <h3 className="text-headline-lg font-headline-lg">Bed Management Dashboard</h3>
         </div>
         {stats && (
-          <div className="flex flex-wrap gap-md">
-            <div className="glass-card border border-outline-variant px-md py-sm rounded-xl flex flex-col">
-              <span className="text-label-sm text-on-surface-variant uppercase">Total</span>
-              <span className="text-title-lg font-bold">{stats.total}</span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 w-full">
+            <div className="glass-card border border-outline-variant px-3 py-2 rounded-xl flex flex-col justify-center bg-white shadow-xs">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total</span>
+              <span className="text-xl font-black text-slate-900 leading-tight">{stats.total}</span>
             </div>
-            <div className="glass-card border border-outline-variant px-md py-sm rounded-xl flex flex-col border-l-4 border-l-green-500">
-              <span className="text-label-sm text-on-surface-variant uppercase">Available</span>
-              <span className="text-title-lg font-bold text-green-600">{stats.available}</span>
+            <div className="glass-card border border-outline-variant px-3 py-2 rounded-xl flex flex-col justify-center bg-white shadow-xs border-l-4 border-l-emerald-500">
+              <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">Available</span>
+              <span className="text-xl font-black text-emerald-600 leading-tight">{stats.available}</span>
             </div>
-            <div className="glass-card border border-outline-variant px-md py-sm rounded-xl flex flex-col border-l-4 border-l-red-500">
-              <span className="text-label-sm text-on-surface-variant uppercase">Occupied</span>
-              <span className="text-title-lg font-bold text-red-600">{stats.occupied}</span>
+            <div className="glass-card border border-outline-variant px-3 py-2 rounded-xl flex flex-col justify-center bg-white shadow-xs border-l-4 border-l-rose-500">
+              <span className="text-[11px] font-bold text-rose-700 uppercase tracking-wider">Occupied</span>
+              <span className="text-xl font-black text-rose-600 leading-tight">{stats.occupied}</span>
             </div>
-            <div className="glass-card border border-outline-variant px-md py-sm rounded-xl flex flex-col border-l-4 border-l-amber-500">
-              <span className="text-label-sm text-on-surface-variant uppercase">Reserved</span>
-              <span className="text-title-lg font-bold text-amber-600">{stats.reserved}</span>
+            <div className="glass-card border border-outline-variant px-3 py-2 rounded-xl flex flex-col justify-center bg-white shadow-xs border-l-4 border-l-amber-500">
+              <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">Reserved</span>
+              <span className="text-xl font-black text-amber-600 leading-tight">{stats.reserved}</span>
             </div>
-            <div className="glass-card border border-outline-variant px-md py-sm rounded-xl flex flex-col border-l-4 border-l-teal-500">
-              <span className="text-label-sm text-on-surface-variant uppercase">Cleaning</span>
-              <span className="text-title-lg font-bold text-teal-600">{stats.cleaning}</span>
+            <div className="glass-card border border-outline-variant px-3 py-2 rounded-xl flex flex-col justify-center bg-white shadow-xs border-l-4 border-l-teal-500">
+              <span className="text-[11px] font-bold text-teal-700 uppercase tracking-wider">Cleaning</span>
+              <span className="text-xl font-black text-teal-600 leading-tight">{stats.cleaning}</span>
             </div>
-            <div className="glass-card border border-outline-variant px-md py-sm rounded-xl flex flex-col border-l-4 border-l-gray-500">
-              <span className="text-label-sm text-on-surface-variant uppercase">Maintenance</span>
-              <span className="text-title-lg font-bold text-gray-600">{stats.maintenance}</span>
+            <div className="glass-card border border-outline-variant px-3 py-2 rounded-xl flex flex-col justify-center bg-white shadow-xs border-l-4 border-l-slate-400">
+              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Maintenance</span>
+              <span className="text-xl font-black text-slate-700 leading-tight">{stats.maintenance}</span>
+            </div>
+            <div className="glass-card border border-outline-variant px-3 py-2 rounded-xl flex flex-col justify-center bg-white shadow-xs border-l-4 border-l-purple-500">
+              <span className="text-[11px] font-bold text-purple-700 uppercase tracking-wider">Blocked</span>
+              <span className="text-xl font-black text-purple-600 leading-tight">{stats.blocked || 0}</span>
             </div>
           </div>
         )}
       </div>
 
-      {/* Filter Bar */}
-      <div className="bg-surface-container-lowest border border-outline-variant p-md rounded-xl mb-xl flex flex-col lg:flex-row items-start lg:items-center gap-lg animate-fade-in">
+      {/* Section Sub-Tabs: All Beds, Pending Transfers, Available Beds, Occupied Beds, Transfer History */}
+      <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
+        {[
+          { id: 'all', label: 'All Beds', icon: 'single_bed', count: beds.length },
+          { id: 'pending-transfers', label: 'Pending Transfer Requests', icon: 'transfer_within_a_station', count: pendingTransfers.length, badgeColor: 'bg-amber-100 text-amber-800' },
+          { id: 'available', label: 'Available Beds', icon: 'check_circle', count: stats?.available || beds.filter(b => b.status === 'Available').length, badgeColor: 'bg-emerald-100 text-emerald-800' },
+          { id: 'occupied', label: 'Current Occupied Beds', icon: 'hotel', count: stats?.occupied || beds.filter(b => b.status === 'Occupied').length, badgeColor: 'bg-rose-100 text-rose-800' },
+          { id: 'history', label: 'Transfer History', icon: 'history', count: transferHistory.length, badgeColor: 'bg-blue-100 text-blue-800' }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => { setMainTab(tab.id); setCurrentPage(1); }}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap border ${
+              mainTab === tab.id
+                ? 'bg-teal-700 text-white border-teal-700 shadow-sm'
+                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            <span className="material-symbols-outlined text-base">{tab.icon}</span>
+            <span>{tab.label}</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+              mainTab === tab.id ? 'bg-white/20 text-white' : (tab.badgeColor || 'bg-slate-100 text-slate-700')
+            }`}>
+              {tab.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Filter Bar & View Toggle */}
+      <div className="bg-white border border-slate-200 p-3 rounded-xl mb-6 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 shadow-xs">
         <div className="flex-1 w-full relative">
-           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
            <input 
              type="text" 
-             placeholder="Search bed number or patient name..." 
-             className="w-full pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant rounded-lg text-body-md focus:ring-primary focus:border-primary transition-all"
+             placeholder="Search bed number, patient name, room or floor..." 
+             className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-teal-500 focus:border-teal-500 transition-all font-medium"
              value={searchQuery}
              onChange={(e) => setSearchQuery(e.target.value)}
            />
         </div>
         
-        <div className="flex items-center gap-sm flex-wrap">
-          <span className="text-label-md text-on-surface-variant">Ward:</span>
-          <select 
-            value={wardFilter} 
-            onChange={(e) => setWardFilter(e.target.value)}
-            className="bg-surface-container-low border border-outline-variant rounded-lg text-body-md py-1.5 px-3"
-          >
-            {['All Wards', 'ICU', 'General', 'Surgery'].map(w => <option key={w} value={w}>{w}</option>)}
-          </select>
-        </div>
-
-        <div className="flex items-center gap-sm flex-wrap">
-          <span className="text-label-md text-on-surface-variant">Status:</span>
-          <select 
-            value={statusFilter} 
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-surface-container-low border border-outline-variant rounded-lg text-body-md py-1.5 px-3"
-          >
-            {['All', 'Available', 'Occupied', 'Reserved', 'Cleaning', 'Maintenance'].map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </div>
-      </div>
-
-      {/* Bed Grid View */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-lg animate-fade-in animation-delay-200">
-        {beds.map(bed => (
-          <div key={bed._id} className="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col">
-            
-            <div className={`p-md flex justify-between items-start cursor-pointer ${
-              bed.status === 'Available' ? 'bg-green-50/50' : 
-              bed.status === 'Occupied' ? 'bg-red-50/50' : 
-              bed.status === 'Cleaning' ? 'bg-teal-50/50' : 
-              bed.status === 'Reserved' ? 'bg-amber-50/50' : 'bg-gray-100/50'
-            }`} onClick={() => openDetails(bed._id)}>
-              <div>
-                <span className="text-label-md text-on-surface-variant block uppercase">{bed.wardType || bed.type || 'General'} WARD</span>
-                <h4 className="text-headline-md font-bold hover:text-primary transition-colors">{bed.bedNumber}</h4>
-              </div>
-              <span className={`text-[10px] font-bold px-2 py-1 rounded tracking-tighter flex items-center gap-xs ${
-                bed.status === 'Available' ? 'bg-green-100 text-green-800' : 
-                bed.status === 'Occupied' ? 'bg-red-100 text-red-800' : 
-                bed.status === 'Cleaning' ? 'bg-teal-100 text-teal-800' : 
-                bed.status === 'Reserved' ? 'bg-amber-100 text-amber-800' : 'bg-gray-200 text-gray-800'
-              }`}>
-                {bed.status === 'Cleaning' && <span className="material-symbols-outlined text-[12px] animate-spin">sync</span>}
-                {bed.status.toUpperCase()}
-              </span>
-            </div>
-
-            <div className="p-md border-t border-outline-variant/30 flex-1 flex flex-col">
-              {bed.status === 'Occupied' && (
-                <>
-                  <div className="flex items-center gap-md mb-md">
-                    <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center shrink-0">
-                      <span className="material-symbols-outlined text-outline">person</span>
-                    </div>
-                    <div>
-                      <p className="text-body-md font-bold truncate">{bed.patientName || 'Unknown Patient'}</p>
-                      <p className="text-body-sm text-on-surface-variant">ID: {bed.patientId || 'N/A'}</p>
-                    </div>
-                  </div>
-                  <div className="text-body-sm text-on-surface-variant mt-auto">
-                    Admin: <span className="font-medium text-on-surface">{bed.admissionDate ? new Date(bed.admissionDate).toLocaleDateString() : 'N/A'}</span>
-                  </div>
-                </>
-              )}
-
-              {bed.status === 'Available' && (
-                <div className="flex-1 flex flex-col justify-center items-center text-center py-sm">
-                  <p className="text-body-sm text-on-surface-variant mb-md">Ready for patient assignment</p>
-                  {hasAccess(['Admin', 'Doctor', 'Receptionist', 'Nurse']) && (
-                    <button 
-                      onClick={() => setAllocateModal({ isOpen: true, bedId: bed._id, bedNumber: bed.bedNumber })}
-                      className="w-full bg-primary text-on-primary py-2 rounded-lg font-bold text-label-md shadow-sm active:scale-95 transition-transform hover:bg-primary/90 mb-2"
-                    >
-                      ALLOCATE BED
-                    </button>
-                  )}
-                  {hasAccess(['Admin', 'Receptionist', 'Doctor']) && (
-                    <button 
-                      onClick={() => setReserveModal({ isOpen: true, bedId: bed._id, bedNumber: bed.bedNumber })}
-                      className="w-full border border-primary text-primary py-2 rounded-lg font-bold text-label-md shadow-sm active:scale-95 transition-colors hover:bg-primary/10"
-                    >
-                      RESERVE BED
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {bed.status === 'Cleaning' && (
-                <div className="flex-1 flex flex-col justify-center text-center">
-                  <span className="material-symbols-outlined text-[32px] text-teal-500 mb-2 animate-pulse">cleaning_services</span>
-                  <p className="text-body-sm text-on-surface-variant">{bed.notes || 'Routine Cleaning'}</p>
-                </div>
-              )}
-
-              {bed.status === 'Reserved' && (
-                <div className="flex-1 flex flex-col justify-center items-center text-center">
-                  <span className="material-symbols-outlined text-[32px] text-amber-500 mb-2">event_available</span>
-                  <p className="text-body-sm text-on-surface-variant line-clamp-2">{bed.notes || 'Reserved for incoming patient'}</p>
-                </div>
-              )}
-
-              {bed.status === 'Maintenance' && (
-                <div className="flex-1 flex flex-col justify-center items-center text-center">
-                  <span className="material-symbols-outlined text-[32px] text-gray-500 mb-2">build</span>
-                  <p className="text-body-sm text-on-surface-variant line-clamp-2">{bed.notes || 'Under maintenance'}</p>
-                </div>
-              )}
-            </div>
-
-            <div className="p-sm bg-surface-container-low flex gap-sm mt-auto border-t border-outline-variant/50">
-              {bed.status === 'Occupied' && hasAccess(['Admin', 'Doctor', 'Nurse']) && (
-                 <button onClick={() => setTransferModal({ isOpen: true, fromBedId: bed._id, fromBedNumber: bed.bedNumber })} className="flex-1 py-1.5 rounded-md border border-primary text-primary text-label-md font-bold hover:bg-primary hover:text-on-primary transition-colors">TRANSFER</button>
-              )}
-              {bed.status === 'Occupied' && hasAccess(['Admin', 'Doctor', 'Receptionist', 'Nurse']) && (
-                 <button onClick={() => updateSimpleStatus(bed._id, 'Cleaning', 'Discharged')} className="flex-1 py-1.5 rounded-md border border-outline-variant text-on-surface-variant text-label-md font-bold hover:bg-surface-container-high transition-colors">DISCHARGE</button>
-              )}
-              {bed.status === 'Cleaning' && hasAccess(['Admin', 'Nurse', 'Inventory Manager']) && (
-                <button onClick={() => updateSimpleStatus(bed._id, 'Available')} className="w-full py-1.5 rounded-md border border-teal-600 text-teal-700 text-label-md font-bold hover:bg-teal-50 transition-colors">MARK CLEANED</button>
-              )}
-              {bed.status === 'Reserved' && hasAccess(['Admin', 'Receptionist', 'Doctor']) && (
-                <>
-                  <button onClick={() => setAllocateModal({ isOpen: true, bedId: bed._id, bedNumber: bed.bedNumber })} className="flex-1 py-1.5 rounded-md border border-amber-600 text-amber-700 text-label-md font-bold hover:bg-amber-50 transition-colors">ADMIT</button>
-                  <button onClick={() => updateSimpleStatus(bed._id, 'Available', 'Reservation Cancelled')} className="w-8 flex items-center justify-center rounded-md border border-outline-variant text-error hover:bg-red-50" title="Cancel">
-                    <span className="material-symbols-outlined text-[18px]">close</span>
-                  </button>
-                </>
-              )}
-              {bed.status === 'Available' && hasAccess(['Admin', 'Inventory Manager', 'Nurse']) && (
-                  <button onClick={() => updateSimpleStatus(bed._id, 'Cleaning')} className="flex-1 py-1.5 rounded-md bg-surface-container text-on-surface text-label-md font-bold hover:bg-surface-container-high transition-colors text-[10px]">CLEAN</button>
-              )}
-              {bed.status === 'Available' && hasAccess(['Admin', 'Inventory Manager']) && (
-                  <button onClick={() => updateSimpleStatus(bed._id, 'Maintenance')} className="flex-1 py-1.5 rounded-md bg-surface-container text-on-surface text-label-md font-bold hover:bg-surface-container-high transition-colors text-[10px]">MAINTENANCE</button>
-              )}
-               {bed.status === 'Maintenance' && hasAccess(['Admin', 'Inventory Manager']) && (
-                  <button onClick={() => updateSimpleStatus(bed._id, 'Cleaning', 'Maintenance Finished')} className="w-full py-1.5 rounded-md border border-gray-600 text-gray-700 text-label-md font-bold hover:bg-gray-100 transition-colors">FINISH REPAIRS</button>
-              )}
-            </div>
+        <div className="flex items-center gap-2 flex-wrap w-full lg:w-auto justify-between lg:justify-end">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-bold text-slate-500">Ward:</span>
+            <select 
+              value={wardFilter} 
+              onChange={(e) => { setWardFilter(e.target.value); setCurrentPage(1); }}
+              className="bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold py-1.5 px-2.5 text-slate-700"
+            >
+              {['All Wards', 'ICU', 'General', 'Surgery', 'Pediatric', 'Emergency', 'Isolation', 'Maternity', 'HDU', 'Special'].map(w => <option key={w} value={w}>{w}</option>)}
+            </select>
           </div>
-        ))}
-        {beds.length === 0 && (
-            <div className="col-span-full py-2xl text-center text-on-surface-variant">
-                <span className="material-symbols-outlined text-[48px] opacity-50 mb-md">search_off</span>
-                <p>No beds found matching your filters.</p>
-            </div>
-        )}
+
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-bold text-slate-500">Status:</span>
+            <select 
+              value={statusFilter} 
+              onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+              className="bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold py-1.5 px-2.5 text-slate-700"
+            >
+              {['All', 'Available', 'Occupied', 'Reserved', 'Cleaning', 'Maintenance', 'Blocked'].map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+
+          {/* View Mode Toggle */}
+          <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold transition-all ${
+                viewMode === 'table' ? 'bg-white text-teal-700 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+              }`}
+              title="Table List View"
+            >
+              <span className="material-symbols-outlined text-sm">table_rows</span>
+              <span>Table List</span>
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold transition-all ${
+                viewMode === 'grid' ? 'bg-white text-teal-700 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+              }`}
+              title="Grid Card View"
+            >
+              <span className="material-symbols-outlined text-sm">grid_view</span>
+              <span>Cards</span>
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* TABLE LIST VIEW WITH PAGINATION */}
+      {viewMode === 'table' && (
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs mb-6">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+                  <th className="py-3 px-4">Bed Info</th>
+                  <th className="py-3 px-4">Ward & Room</th>
+                  <th className="py-3 px-4">Bed Status</th>
+                  <th className="py-3 px-4">Patient Details</th>
+                  <th className="py-3 px-4">Patient ID</th>
+                  <th className="py-3 px-4">Assigned Doctor</th>
+                  <th className="py-3 px-4">Admission Date</th>
+                  <th className="py-3 px-4 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {paginatedBeds.map((bed) => (
+                  <tr key={bed._id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3 px-4 font-bold text-slate-900">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-teal-600 text-base">single_bed</span>
+                        <div>
+                          <span className="font-black text-sm text-slate-900">{bed.bedNumber}</span>
+                          <span className="block text-[10px] text-slate-400">{bed.bedType || 'Standard'}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="font-bold text-slate-800">{bed.wardType || bed.type || 'General'} Ward</div>
+                      <div className="text-[11px] text-slate-500 font-mono">Floor {bed.floor || '1'} • Room {bed.room || 'A'}</div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-1 rounded-full text-[10px] font-black tracking-wide border ${
+                        bed.status === 'Available' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        bed.status === 'Occupied' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                        bed.status === 'Reserved' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                        bed.status === 'Cleaning' ? 'bg-teal-50 text-teal-700 border-teal-200' :
+                        bed.status === 'Blocked' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                        'bg-slate-100 text-slate-700 border-slate-200'
+                      }`}>
+                        {bed.status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      {bed.patientName ? (
+                        <div>
+                          <div className="font-bold text-slate-900 flex items-center gap-1">
+                            <span className="material-symbols-outlined text-sm text-slate-400">person</span>
+                            <span>{bed.patientName}</span>
+                          </div>
+                          <div className="text-[10px] text-slate-500">{bed.notes || 'Inpatient Stay'}</div>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 italic">No patient assigned</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 font-mono font-bold text-slate-700">
+                      {bed.patientId ? (
+                        <span className="px-1.5 py-0.5 bg-slate-100 rounded text-[11px]">{bed.patientId}</span>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-slate-700 font-medium">
+                      {bed.assignedDoctor || (bed.status === 'Occupied' ? 'Dr. Assigned Specialist' : '—')}
+                    </td>
+                    <td className="py-3 px-4 text-slate-600 font-mono text-[11px]">
+                      {bed.admissionDate ? new Date(bed.admissionDate).toLocaleDateString() : (bed.status === 'Occupied' ? 'Active' : '—')}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <button
+                        onClick={() => openDetails(bed._id)}
+                        className="px-2.5 py-1 bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-700 rounded-lg text-xs font-bold border border-slate-200 transition-colors inline-flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-sm">visibility</span>
+                        <span>View Details</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {paginatedBeds.length === 0 && (
+                  <tr>
+                    <td colSpan="8" className="py-12 text-center text-slate-400">
+                      <span className="material-symbols-outlined text-3xl mb-1 block">search_off</span>
+                      <span>No beds match the selected filters.</span>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Table Pagination Bar */}
+          {totalPages > 1 && (
+            <div className="p-3 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-bold text-slate-600">
+              <div>
+                Showing <span className="text-slate-900 font-black">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-900 font-black">{Math.min(currentPage * itemsPerPage, beds.length)}</span> of <span className="text-slate-900 font-black">{beds.length}</span> beds
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  className="px-2.5 py-1 rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                  Previous
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                  <button
+                    key={p}
+                    onClick={() => setCurrentPage(p)}
+                    className={`w-7 h-7 rounded-md border text-xs font-black transition-all ${
+                      currentPage === p
+                        ? 'bg-teal-700 text-white border-teal-700 shadow-xs'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  className="px-2.5 py-1 rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* BED GRID VIEW WITH PAGINATION */}
+      {viewMode === 'grid' && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 animate-fade-in animation-delay-200 mb-6">
+            {paginatedBeds.map(bed => (
+              <div key={bed._id} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col">
+                
+                <div className={`p-3.5 flex justify-between items-start cursor-pointer border-b border-slate-100 ${
+                  bed.status === 'Available' ? 'bg-emerald-50/40' : 
+                  bed.status === 'Occupied' ? 'bg-rose-50/40' : 
+                  bed.status === 'Cleaning' ? 'bg-teal-50/40' : 
+                  bed.status === 'Reserved' ? 'bg-amber-50/40' :
+                  bed.status === 'Blocked' ? 'bg-purple-50/40' : 'bg-slate-100/40'
+                }`} onClick={() => openDetails(bed._id)}>
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className="text-[11px] text-slate-700 block uppercase font-black">{bed.wardType || bed.type || 'General'} WARD</span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.2 bg-white rounded text-slate-600 border border-slate-200">{bed.bedType || 'Standard'}</span>
+                    </div>
+                    <h4 className="text-base font-bold text-slate-900 hover:text-teal-700 transition-colors flex items-center gap-1.5">
+                      <span>{bed.bedNumber}</span>
+                      <span className="text-[11px] font-mono text-slate-400 font-normal">({bed.floor ? `Fl ${bed.floor}` : 'Fl 1'}, {bed.room ? `Rm ${bed.room}` : 'Rm A'})</span>
+                    </h4>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded tracking-tighter flex items-center gap-1 border ${
+                    bed.status === 'Available' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 
+                    bed.status === 'Occupied' ? 'bg-rose-100 text-rose-800 border-rose-200' : 
+                    bed.status === 'Cleaning' ? 'bg-teal-100 text-teal-800 border-teal-200' : 
+                    bed.status === 'Reserved' ? 'bg-amber-100 text-amber-800 border-amber-200' :
+                    bed.status === 'Blocked' ? 'bg-purple-100 text-purple-800 border-purple-200' : 'bg-slate-200 text-slate-800 border-slate-300'
+                  }`}>
+                    {bed.status === 'Cleaning' && <span className="material-symbols-outlined text-[12px] animate-spin">sync</span>}
+                    {bed.status.toUpperCase()}
+                  </span>
+                </div>
+
+                <div className="p-3.5 flex-1 flex flex-col justify-between">
+                  {bed.status === 'Occupied' && (
+                    <>
+                      <div className="flex items-center gap-2.5 mb-2">
+                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
+                          <span className="material-symbols-outlined text-slate-500 text-base">person</span>
+                        </div>
+                        <div className="overflow-hidden">
+                          <p className="text-xs font-bold text-slate-900 truncate">{bed.patientName || 'Unknown Patient'}</p>
+                          <p className="text-[11px] text-slate-500 font-mono">ID: {bed.patientId || 'N/A'}</p>
+                        </div>
+                      </div>
+                      <div className="text-[11px] text-slate-500 mt-auto flex justify-between items-center pt-2 border-t border-slate-100">
+                        <span>Admitted: <b className="font-semibold text-slate-800">{bed.admissionDate ? new Date(bed.admissionDate).toLocaleDateString() : 'Today'}</b></span>
+                        <span className="text-[10px] text-teal-700 font-bold">{bed.bedType || 'Standard Bed'}</span>
+                      </div>
+                    </>
+                  )}
+
+                  {bed.status === 'Available' && (
+                    <div className="flex-1 flex flex-col justify-center items-center text-center py-2">
+                      <span className="material-symbols-outlined text-2xl text-emerald-500 mb-1">check_circle</span>
+                      <p className="text-xs text-slate-500 font-medium">Ready for patient assignment</p>
+                      <p className="text-[10px] text-slate-400">{bed.bedType || 'Standard'} Bed</p>
+                    </div>
+                  )}
+
+                  {bed.status === 'Cleaning' && (
+                    <div className="flex-1 flex flex-col justify-center text-center py-2">
+                      <span className="material-symbols-outlined text-2xl text-teal-500 mb-1 animate-pulse">cleaning_services</span>
+                      <p className="text-xs text-slate-600 font-medium">{bed.notes || 'Routine Sanitization in progress'}</p>
+                    </div>
+                  )}
+
+                  {bed.status === 'Reserved' && (
+                    <div className="flex-1 flex flex-col justify-center items-center text-center py-2">
+                      <span className="material-symbols-outlined text-2xl text-amber-500 mb-1">event_available</span>
+                      <p className="text-xs text-slate-600 font-medium line-clamp-2">{bed.notes || 'Reserved for incoming patient'}</p>
+                    </div>
+                  )}
+
+                  {bed.status === 'Maintenance' && (
+                    <div className="flex-1 flex flex-col justify-center items-center text-center py-2">
+                      <span className="material-symbols-outlined text-2xl text-slate-400 mb-1">build</span>
+                      <p className="text-xs text-slate-600 font-medium line-clamp-2">{bed.notes || 'Under engineering maintenance'}</p>
+                    </div>
+                  )}
+
+                  {bed.status === 'Blocked' && (
+                    <div className="flex-1 flex flex-col justify-center items-center text-center py-2">
+                      <span className="material-symbols-outlined text-2xl text-purple-500 mb-1">block</span>
+                      <p className="text-xs text-slate-600 font-medium line-clamp-2">{bed.notes || 'Bed blocked by Administration'}</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-2.5 bg-slate-50 flex items-center justify-between border-t border-slate-100">
+                  <button
+                    onClick={() => openDetails(bed._id)}
+                    className="w-full py-1.5 bg-white hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-bold border border-slate-200 transition-colors flex items-center justify-center gap-1 shadow-2xs"
+                  >
+                    <span className="material-symbols-outlined text-sm">visibility</span>
+                    <span>View Details</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Table Pagination Bar for Grid */}
+          {totalPages > 1 && (
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl mb-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-bold text-slate-600">
+              <div>
+                Showing <span className="text-slate-900 font-black">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-900 font-black">{Math.min(currentPage * itemsPerPage, beds.length)}</span> of <span className="text-slate-900 font-black">{beds.length}</span> beds
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  className="px-2.5 py-1 rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                  Previous
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                  <button
+                    key={p}
+                    onClick={() => setCurrentPage(p)}
+                    className={`w-7 h-7 rounded-md border text-xs font-black transition-all ${
+                      currentPage === p
+                        ? 'bg-teal-700 text-white border-teal-700 shadow-xs'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  className="px-2.5 py-1 rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* PENDING TRANSFERS TABLE VIEW */}
+      {mainTab === 'pending-transfers' && (
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs mb-6">
+          <div className="p-4 bg-amber-50/70 border-b border-amber-200 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-amber-700">transfer_within_a_station</span>
+              <h3 className="font-extrabold text-sm text-slate-800">Doctor-Approved Pending Transfer Requisitions ({pendingTransfers.length})</h3>
+            </div>
+            <span className="text-xs text-amber-800 font-bold">Select destination bed & execute transfer</span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+                  <th className="py-3 px-4">Patient Name & ID</th>
+                  <th className="py-3 px-4">Current Ward / Bed</th>
+                  <th className="py-3 px-4">Destination Ward</th>
+                  <th className="py-3 px-4">Required Bed Type</th>
+                  <th className="py-3 px-4">Priority</th>
+                  <th className="py-3 px-4">Transfer Reason</th>
+                  <th className="py-3 px-4">Requested By</th>
+                  <th className="py-3 px-4 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {pendingTransfers.map((req) => (
+                  <tr key={req._id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3 px-4">
+                      <div className="font-black text-slate-900">{req.patientName}</div>
+                      <div className="text-[10px] font-mono text-slate-500">{req.patientCustomId || 'PID-N/A'}</div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold">
+                        {req.currentWard} • {req.currentBedNumber}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        {req.transferDetails?.recommendedWard || req.transferDetails?.targetWard || 'Target Ward'}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 font-semibold text-slate-700">
+                      {req.transferDetails?.requiredBedType || 'Standard Bed'}
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-black border ${
+                        req.transferDetails?.priority === 'Emergency' ? 'bg-rose-100 text-rose-800 border-rose-300' :
+                        req.transferDetails?.priority === 'Urgent' ? 'bg-amber-100 text-amber-800 border-amber-300' :
+                        'bg-slate-100 text-slate-700 border-slate-200'
+                      }`}>
+                        {req.transferDetails?.priority || 'Normal'}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-slate-600 max-w-xs truncate" title={req.transferDetails?.reasonForTransfer || req.reason}>
+                      {req.transferDetails?.reasonForTransfer || req.reason || 'Clinical transfer required'}
+                    </td>
+                    <td className="py-3 px-4 text-slate-700 font-medium">
+                      {req.doctorName || 'Dr. Attending'}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <button
+                        onClick={() => {
+                          const matchingCurrentBed = beds.find(b => b.bedNumber === req.currentBedNumber);
+                          setTransferModal({
+                            isOpen: true,
+                            fromBedId: matchingCurrentBed?._id || req.currentBedNumber,
+                            fromBedNumber: req.currentBedNumber
+                          });
+                          setTransferData({
+                            toBedId: '',
+                            reason: req.transferDetails?.reasonForTransfer || req.reason || 'Doctor-Approved Ward Transfer'
+                          });
+                        }}
+                        className="px-3 py-1.5 bg-teal-700 hover:bg-teal-800 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 mx-auto shadow-xs"
+                      >
+                        <span className="material-symbols-outlined text-sm">swap_horiz</span>
+                        <span>Assign & Transfer</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {pendingTransfers.length === 0 && (
+                  <tr>
+                    <td colSpan="8" className="py-12 text-center text-slate-400">
+                      <span className="material-symbols-outlined text-4xl mb-1 text-emerald-500 block">check_circle</span>
+                      <p className="font-bold text-sm text-slate-700">No pending transfer requests</p>
+                      <p className="text-xs text-slate-400 mt-0.5">All inpatient bed transfer requests have been processed.</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* TRANSFER HISTORY VIEW */}
+      {mainTab === 'history' && (
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs mb-6">
+          <div className="p-4 bg-blue-50/70 border-b border-blue-200 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-blue-700">history</span>
+              <h3 className="font-extrabold text-sm text-slate-800">Permanent Hospital Inpatient Transfer Log ({transferHistory.length})</h3>
+            </div>
+            <span className="text-xs text-blue-800 font-bold">Audit-compliant transfer records</span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+                  <th className="py-3 px-4">Patient ID & Name</th>
+                  <th className="py-3 px-4">From Ward / Bed</th>
+                  <th className="py-3 px-4 text-center">Transfer Path</th>
+                  <th className="py-3 px-4">To Ward / Bed</th>
+                  <th className="py-3 px-4">Requested By</th>
+                  <th className="py-3 px-4">Clinical Reason</th>
+                  <th className="py-3 px-4">Date / Time</th>
+                  <th className="py-3 px-4 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {transferHistory.map((hist) => (
+                  <tr key={hist._id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3 px-4">
+                      <div className="font-black text-slate-900">{hist.patientName}</div>
+                      <div className="text-[10px] font-mono text-teal-700 font-bold">{hist.patientCustomId || 'PID-RECORD'}</div>
+                    </td>
+                    <td className="py-3 px-4 font-bold text-slate-700">
+                      {hist.currentWard} • {hist.currentBedNumber}
+                    </td>
+                    <td className="py-3 px-4 text-center text-teal-700 font-black">
+                      ➔
+                    </td>
+                    <td className="py-3 px-4 font-black text-emerald-800">
+                      {hist.transferDetails?.allocatedWard || hist.transferDetails?.recommendedWard || 'General'} • {hist.transferDetails?.allocatedBedNumber || hist.transferDetails?.targetWard || 'Bed Allocated'}
+                    </td>
+                    <td className="py-3 px-4 text-slate-700 font-medium">
+                      {hist.doctorName || hist.authorizedBy || 'Attending Physician'}
+                    </td>
+                    <td className="py-3 px-4 text-slate-600 max-w-xs truncate" title={hist.transferDetails?.reasonForTransfer || hist.reason}>
+                      {hist.transferDetails?.reasonForTransfer || hist.reason || 'Clinical Step-down / Up transfer'}
+                    </td>
+                    <td className="py-3 px-4 text-slate-500 font-mono text-[11px]">
+                      {new Date(hist.updatedAt || hist.createdAt).toLocaleString()}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        COMPLETED
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+                {transferHistory.length === 0 && (
+                  <tr>
+                    <td colSpan="8" className="py-12 text-center text-slate-400">
+                      <span className="material-symbols-outlined text-4xl opacity-50 mb-1 block">history</span>
+                      <p className="font-bold text-sm">No transfer history records logged yet.</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* ALLOCATE MODAL */}
       {allocateModal.isOpen && (

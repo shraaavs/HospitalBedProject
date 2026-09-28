@@ -1,272 +1,375 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import axios from 'axios';
 
-export default function Register() {
+export default function Register({ defaultRole }) {
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  const roleParam = defaultRole || searchParams.get('role');
+  const validRoles = ['Receptionist', 'Doctor', 'Nurse'];
+  const initialRole = validRoles.find(r => r.toLowerCase() === roleParam?.toLowerCase()) || 'Receptionist';
+
   const [formData, setFormData] = useState({
-    fullName: '',
-    role: 'Nurse',
+    role: initialRole,
+    name: '',
     email: '',
+    username: '',
+    customId: '',
+    department: 'General Medicine',
+    assignedWard: 'General',
     password: '',
     confirmPassword: ''
   });
-  
+
   const [showPassword, setShowPassword] = useState(false);
-  const [focusField, setFocusField] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (roleParam && validRoles.some(r => r.toLowerCase() === roleParam.toLowerCase())) {
+      const matched = validRoles.find(r => r.toLowerCase() === roleParam.toLowerCase());
+      if (matched) {
+        setFormData(prev => ({ ...prev, role: matched }));
+      }
+    }
+  }, [roleParam]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const getLoginRoute = (targetRole) => {
+    switch (targetRole) {
+      case 'Doctor': return '/doctor/login';
+      case 'Nurse': return '/nurse/login';
+      case 'Receptionist': return '/receptionist/login';
+      default: return '/';
+    }
+  };
+
+  const getRoleIcon = (targetRole) => {
+    switch (targetRole) {
+      case 'Doctor': return 'stethoscope';
+      case 'Nurse': return 'medical_services';
+      case 'Receptionist': return 'support_agent';
+      default: return 'badge';
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setSuccess('');
+
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords don't match!");
+      setError('Passwords do not match. Please re-enter.');
       return;
     }
-    
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.fullName,
-          email: formData.email,
-          password: formData.password,
-          role: formData.role
-        })
-      });
-      
-      let data;
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.indexOf("application/json") !== -1) {
-        data = await response.json();
-      } else {
-        const text = await response.text();
-        console.error("Non-JSON response:", text);
-        throw new Error("Server returned non-JSON response. The backend might be down.");
+      const { data } = await axios.post('/api/auth/register', formData);
+
+      // Save token & user details
+      if (data.token) {
+        localStorage.setItem('userToken', data.token);
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userRole', data.role);
+        localStorage.setItem('userName', data.name);
+        if (data.department || formData.department) {
+          localStorage.setItem('userDepartment', data.department || formData.department);
+        }
       }
-      
-      if (response.ok) {
-        alert('Registration successful!');
-        navigate('/login');
-      } else {
-        alert(data.message || 'Registration failed');
-      }
+
+      setSuccess(data.message || 'Registration successful! Redirecting...');
+      setTimeout(() => {
+        navigate(getLoginRoute(formData.role));
+      }, 1800);
     } catch (err) {
-      console.error('Registration error:', err);
-      alert('Network error. Please try again later.');
+      const msg = err.response?.data?.message || (err.message === 'Network Error' ? 'Cannot connect to backend server. Please ensure backend is running.' : err.message) || 'Registration failed. Please try again.';
+      setError(msg);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="auth-bg min-h-screen w-full flex items-center justify-center p-margin-mobile md:p-0 overflow-hidden relative">
-      {/* Background Atmospheric Elements */}
-      <div className="fixed inset-0 pointer-events-none opacity-20">
-        <div className="absolute top-[-10%] right-[-5%] w-[40vw] h-[40vw] rounded-full bg-primary-fixed blur-[120px]"></div>
-        <div className="absolute bottom-[-10%] left-[-5%] w-[30vw] h-[30vw] rounded-full bg-secondary-fixed blur-[100px]"></div>
+    <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 overflow-hidden relative">
+      {/* Hospital Bed Background with Atmospheric Gradient Overlay */}
+      <div className="absolute inset-0 z-0">
+        <div 
+          className="bg-cover bg-center w-full h-full transform scale-105"
+          style={{ 
+            backgroundImage: "url('https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=2000&q=80')" 
+          }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950/85 via-primary/65 to-slate-900/85 backdrop-blur-[4px]"></div>
       </div>
-      
-      <main className="relative z-10 w-full max-w-[1100px] grid grid-cols-1 lg:grid-cols-2 shadow-2xl rounded-xl overflow-hidden bg-surface-container-lowest border border-outline-variant/30 m-4 animate-slide-up">
-        {/* Left Section: Visual Branding & Context (Desktop Only) */}
-        <section className="hidden lg:flex relative flex-col justify-end p-xl overflow-hidden min-h-[600px]">
-          {/* Background Image with Overlay */}
-          <div className="absolute inset-0 z-0">
-            <div 
-              className="bg-cover bg-center w-full h-full transform scale-105 hover:scale-100 transition-transform duration-10000"
-              style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBBv8s25q_jkkjsQnwruX8Em8pZUR9vMPQyijYoawmQKnl4tEV1YRgTNhMz4L3jqu65QdGEO1ObbpHWiOmKfBAWM810oWIHZEGIPn1zH1cbcn-enaQXm207aBC3eTp60D-VlDdsNryUMEE2WeVzZa7YRAWh-AvX8mH6NyYhEaoQXrRBq-sMo987jU3lFSmiR_CG9ongLl2qHUmOav_vrQV2pCnRF4aNmAhgGSfd_1F3WO40xzrqpuQfGNHiQvrZ_MS8933_aZhueojD')" }}
-            ></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/50 to-transparent"></div>
+
+      {/* Top Branding Navigation */}
+      <header className="absolute top-0 left-0 w-full p-6 lg:p-8 z-20 flex items-center justify-between">
+        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
+          <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-lg">
+            <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>health_metrics</span>
           </div>
-          {/* Content Overlay */}
-          <div className="relative z-10 text-on-primary">
-            <div className="flex items-center gap-xs mb-md">
-              <span className="material-symbols-outlined text-[40px]" style={{ fontVariationSettings: "'FILL' 1" }}>health_metrics</span>
-              <h1 className="text-headline-lg font-headline-lg font-extrabold tracking-tight">MediFlow</h1>
+          <span className="text-2xl font-extrabold tracking-tight text-white drop-shadow-md">MediFlow</span>
+        </div>
+        <button 
+          onClick={() => navigate('/')} 
+          className="text-xs font-semibold text-white/80 hover:text-white bg-white/10 hover:bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/15 transition-all flex items-center gap-1.5 cursor-pointer"
+        >
+          <span className="material-symbols-outlined text-sm">arrow_back</span>
+          Home
+        </button>
+      </header>
+
+      <div className="relative z-10 w-full max-w-[480px] bg-white/95 dark:bg-surface-container-lowest/95 backdrop-blur-2xl p-6 md:p-8 rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] border border-white/40 dark:border-white/10 my-16 animate-slide-up">
+        {/* Header */}
+        <div className="flex flex-col items-center mb-6 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-primary to-primary-container flex items-center justify-center mb-3 text-white shadow-lg shadow-primary/30 ring-4 ring-primary/10">
+            <span className="material-symbols-outlined text-[32px]">{getRoleIcon(formData.role)}</span>
+          </div>
+          <h1 className="text-2xl font-bold text-on-surface tracking-tight">Staff Registration</h1>
+          <p className="text-xs font-medium text-on-surface-variant mt-1">
+            Create a new {formData.role} account in MediFlow
+          </p>
+        </div>
+
+        {/* Role Selector Tabs */}
+        <div className="grid grid-cols-3 gap-1.5 p-1 bg-surface-container-low rounded-xl mb-lg border border-outline-variant/40">
+          {validRoles.map((r) => (
+            <button
+              key={r}
+              type="button"
+              onClick={() => {
+                setFormData(prev => ({ ...prev, role: r }));
+                setError('');
+                setSuccess('');
+              }}
+              className={`py-2 px-1 text-xs font-semibold rounded-lg transition-all text-center cursor-pointer ${
+                formData.role === r
+                  ? 'bg-primary text-on-primary shadow-sm'
+                  : 'text-on-surface-variant hover:text-primary hover:bg-surface-container'
+              }`}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
+
+        {/* Error Alert */}
+        {error && (
+          <div className="bg-error-container text-on-error-container p-sm rounded-lg mb-md flex items-center gap-xs">
+            <span className="material-symbols-outlined shrink-0 text-[20px]">error</span>
+            <span className="text-body-sm font-semibold">{error}</span>
+          </div>
+        )}
+
+        {/* Success Alert */}
+        {success && (
+          <div className="bg-emerald-50 text-emerald-800 border border-emerald-200 p-sm rounded-lg mb-md flex items-center gap-xs">
+            <span className="material-symbols-outlined shrink-0 text-[20px] text-emerald-600">check_circle</span>
+            <span className="text-body-sm font-semibold">{success}</span>
+          </div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-md">
+          {/* Full Name */}
+          <div>
+            <label className="block text-label-md font-bold mb-xs">Full Name</label>
+            <div className="relative">
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                className="w-full bg-surface-container-low border border-outline-variant rounded-lg p-sm pl-10 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                placeholder="e.g. Smitha Acharya"
+              />
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">
+                badge
+              </span>
             </div>
-            <h2 className="text-display-lg font-display-lg mb-sm">Join the Network.</h2>
-            <p className="text-body-lg font-body-lg opacity-90 max-w-[28rem]">
-              Create an account to access centralized bed management, duty rosters, and hospital analytics.
-            </p>
-          </div>
-        </section>
-        
-        {/* Right Section: Register Form */}
-        <section className="w-full bg-surface-container-lowest p-lg md:p-xl flex flex-col justify-center h-full overflow-y-auto">
-          {/* Mobile Logo */}
-          <div className="lg:hidden flex items-center justify-between mb-lg">
-             <div className="flex items-center gap-xs">
-              <span className="material-symbols-outlined text-primary text-[32px]" style={{ fontVariationSettings: "'FILL' 1" }}>health_metrics</span>
-              <span className="text-headline-md font-headline-md font-bold text-primary">MediFlow</span>
-             </div>
-             <button onClick={() => navigate('/')} className="text-on-surface-variant p-2 rounded-full hover:bg-surface-container transition-colors">
-               <span className="material-symbols-outlined">close</span>
-             </button>
           </div>
 
-          <div className="hidden lg:flex justify-end mb-4">
-             <button onClick={() => navigate('/')} className="text-on-surface-variant p-2 rounded-full hover:bg-surface-container transition-colors flex items-center gap-1 text-label-md font-label-md">
-               <span className="material-symbols-outlined text-[18px]">close</span>
-               Cancel
-             </button>
+          {/* Email Address */}
+          <div>
+            <label className="block text-label-md font-bold mb-xs">Email Address</label>
+            <div className="relative">
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                className="w-full bg-surface-container-low border border-outline-variant rounded-lg p-sm pl-10 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                placeholder="e.g. smitha@gmail.com"
+              />
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">
+                email
+              </span>
+            </div>
           </div>
 
-          <div className="max-w-[28rem] mx-auto w-full">
-            <header className="mb-lg">
-              <h2 className="text-headline-lg font-headline-lg text-on-surface mb-xs">Register New Staff</h2>
-              <p className="text-body-md font-body-md text-on-surface-variant">Please fill in your details to create an account.</p>
-            </header>
-            
-            <form className="space-y-md" onSubmit={handleSubmit}>
-              {/* Full Name Field */}
-              <div className="space-y-xs">
-                <label 
-                  className={`text-label-md font-label-md flex items-center gap-base transition-colors ${focusField === 'fullName' ? 'text-primary' : 'text-on-surface-variant'}`}
-                  htmlFor="fullName"
-                >
-                  <span className="material-symbols-outlined text-[16px]">badge</span>
-                  Full Name
-                </label>
-                <input 
-                  className="w-full h-12 px-md bg-surface-container-low border border-outline-variant rounded-lg text-body-md font-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none" 
-                  id="fullName" 
-                  name="fullName" 
-                  placeholder="e.g. Dr. Sarah Jenkins" 
-                  type="text"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  onFocus={() => setFocusField('fullName')}
-                  onBlur={() => setFocusField('')}
-                  required
-                />
-              </div>
+          {/* Optional Username & Custom ID */}
+          <div className="grid grid-cols-2 gap-sm">
+            <div>
+              <label className="block text-label-md font-bold mb-xs">
+                Username <span className="text-xs font-normal text-on-surface-variant">(Optional)</span>
+              </label>
+              <input
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                className="w-full bg-surface-container-low border border-outline-variant rounded-lg p-sm text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                placeholder="e.g. smitha"
+              />
+            </div>
+            <div>
+              <label className="block text-label-md font-bold mb-xs">
+                {formData.role} ID <span className="text-xs font-normal text-on-surface-variant">(Auto if empty)</span>
+              </label>
+              <input
+                type="text"
+                name="customId"
+                value={formData.customId}
+                onChange={handleChange}
+                className="w-full bg-surface-container-low border border-outline-variant rounded-lg p-sm text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                placeholder={formData.role === 'Receptionist' ? 'REC-002' : formData.role === 'Doctor' ? 'DOC-002' : formData.role === 'Nurse' ? 'NUR-002' : 'ADM-002'}
+              />
+            </div>
+          </div>
 
-              {/* Role Selection */}
-              <div className="space-y-xs">
-                <label 
-                  className={`text-label-md font-label-md flex items-center gap-base transition-colors ${focusField === 'role' ? 'text-primary' : 'text-on-surface-variant'}`}
-                  htmlFor="role"
-                >
-                  <span className="material-symbols-outlined text-[16px]">work</span>
-                  Role
-                </label>
-                <select 
-                  className="w-full h-12 px-md bg-surface-container-low border border-outline-variant rounded-lg text-body-md font-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none appearance-none" 
-                  id="role" 
-                  name="role" 
-                  value={formData.role}
-                  onChange={handleChange}
-                  onFocus={() => setFocusField('role')}
-                  onBlur={() => setFocusField('')}
-                  required
-                >
-                  <option value="Doctor">Doctor</option>
-                  <option value="Nurse">Nurse</option>
-                  <option value="Receptionist">Receptionist</option>
-                  <option value="Admin">Admin</option>
-                </select>
-              </div>
-
-              {/* Email Field */}
-              <div className="space-y-xs">
-                <label 
-                  className={`text-label-md font-label-md flex items-center gap-base transition-colors ${focusField === 'email' ? 'text-primary' : 'text-on-surface-variant'}`}
-                  htmlFor="email"
-                >
-                  <span className="material-symbols-outlined text-[16px]">email</span>
-                  Email Address
-                </label>
-                <input 
-                  className="w-full h-12 px-md bg-surface-container-low border border-outline-variant rounded-lg text-body-md font-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none" 
-                  id="email" 
-                  name="email" 
-                  placeholder="name@mediflow.com" 
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  onFocus={() => setFocusField('email')}
-                  onBlur={() => setFocusField('')}
-                  required
-                />
-              </div>
-              
-              {/* Password Field */}
-              <div className="space-y-xs">
-                <label 
-                  className={`text-label-md font-label-md flex items-center gap-base transition-colors ${focusField === 'password' ? 'text-primary' : 'text-on-surface-variant'}`}
-                  htmlFor="password"
-                >
-                  <span className="material-symbols-outlined text-[16px]">lock</span>
-                  Password
-                </label>
-                <div className="relative">
-                  <input 
-                    className="w-full h-12 px-md pr-12 bg-surface-container-low border border-outline-variant rounded-lg text-body-md font-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none" 
-                    id="password" 
-                    name="password" 
-                    placeholder="••••••••" 
-                    type={showPassword ? "text" : "password"}
-                    value={formData.password}
-                    onChange={handleChange}
-                    onFocus={() => setFocusField('password')}
-                    onBlur={() => setFocusField('')}
-                    required
-                  />
-                  <button 
-                    className="absolute right-md top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary" 
-                    onClick={() => setShowPassword(!showPassword)}
-                    type="button"
-                  >
-                    <span className="material-symbols-outlined">
-                      {showPassword ? 'visibility_off' : 'visibility'}
-                    </span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Confirm Password Field */}
-              <div className="space-y-xs">
-                <label 
-                  className={`text-label-md font-label-md flex items-center gap-base transition-colors ${focusField === 'confirmPassword' ? 'text-primary' : 'text-on-surface-variant'}`}
-                  htmlFor="confirmPassword"
-                >
-                  <span className="material-symbols-outlined text-[16px]">lock_reset</span>
-                  Confirm Password
-                </label>
-                <input 
-                  className="w-full h-12 px-md bg-surface-container-low border border-outline-variant rounded-lg text-body-md font-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none" 
-                  id="confirmPassword" 
-                  name="confirmPassword" 
-                  placeholder="••••••••" 
-                  type={showPassword ? "text" : "password"}
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  onFocus={() => setFocusField('confirmPassword')}
-                  onBlur={() => setFocusField('')}
-                  required
-                />
-              </div>
-              
-              {/* Register Button */}
-              <button 
-                className="w-full h-14 mt-lg bg-primary text-on-primary rounded-xl font-headline-md text-headline-md shadow-sm hover:bg-primary-container hover:shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-sm cursor-pointer" 
-                type="submit"
+          {/* Role specific: Doctor Department */}
+          {formData.role === 'Doctor' && (
+            <div>
+              <label className="block text-label-md font-bold mb-xs">Department</label>
+              <select
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                className="w-full bg-surface-container-low border border-outline-variant rounded-lg p-sm text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
               >
-                <span className="material-symbols-outlined">person_add</span>
-                Create Account
+                <option value="Cardiology">Cardiology</option>
+                <option value="Neurology">Neurology</option>
+                <option value="Orthopedics">Orthopedics</option>
+                <option value="Emergency">Emergency</option>
+                <option value="General Medicine">General Medicine</option>
+                <option value="Pediatrics">Pediatrics</option>
+              </select>
+            </div>
+          )}
+
+          {/* Role specific: Nurse Ward */}
+          {formData.role === 'Nurse' && (
+            <div>
+              <label className="block text-label-md font-bold mb-xs">Assigned Ward</label>
+              <select
+                name="assignedWard"
+                value={formData.assignedWard}
+                onChange={handleChange}
+                className="w-full bg-surface-container-low border border-outline-variant rounded-lg p-sm text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+              >
+                <option value="General">General Ward</option>
+                <option value="ICU">ICU</option>
+                <option value="Surgery">Surgery</option>
+                <option value="Pediatrics">Pediatrics</option>
+              </select>
+            </div>
+          )}
+
+          {/* Password */}
+          <div>
+            <label className="block text-label-md font-bold mb-xs">Password</label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                minLength={6}
+                className="w-full bg-surface-container-low border border-outline-variant rounded-lg p-sm pl-10 pr-10 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                placeholder="Minimum 6 characters"
+              />
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">
+                lock
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[20px]">
+                  {showPassword ? 'visibility_off' : 'visibility'}
+                </span>
               </button>
-            </form>
-            
-            <footer className="mt-xl pt-lg border-t border-outline-variant/30 text-center">
-              <p className="text-body-md font-body-md text-on-surface-variant">
-                Already have an account? {' '}
-                <button className="text-primary font-bold hover:underline cursor-pointer" onClick={() => navigate('/login')}>Sign in here</button>
-              </p>
-            </footer>
+            </div>
           </div>
-        </section>
-      </main>
+
+          {/* Confirm Password */}
+          <div>
+            <label className="block text-label-md font-bold mb-xs">Confirm Password</label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+                minLength={6}
+                className="w-full bg-surface-container-low border border-outline-variant rounded-lg p-sm pl-10 pr-10 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                placeholder="Re-enter password"
+              />
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">
+                lock_reset
+              </span>
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-primary text-on-primary py-sm rounded-full font-bold hover:brightness-110 transition-all flex justify-center items-center gap-sm disabled:opacity-50 mt-lg cursor-pointer shadow-md"
+          >
+            {loading ? (
+              <>
+                <span className="material-symbols-outlined animate-spin text-[20px]">refresh</span>
+                <span>Creating Account...</span>
+              </>
+            ) : (
+              <>
+                <span className="material-symbols-outlined text-[20px]">person_add</span>
+                <span>Register {formData.role}</span>
+              </>
+            )}
+          </button>
+        </form>
+
+        {/* Links */}
+        <div className="mt-lg pt-md border-t border-outline-variant/30 text-center text-body-md">
+          <span className="text-on-surface-variant">Already registered? </span>
+          <Link
+            to={getLoginRoute(formData.role)}
+            className="text-primary font-bold hover:underline"
+          >
+            Log in to {formData.role} Portal
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

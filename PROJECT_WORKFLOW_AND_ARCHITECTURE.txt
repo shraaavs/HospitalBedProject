@@ -1,0 +1,216 @@
+========================================================================================================================
+                                     MEDIFLOW - HOSPITAL & BED MANAGEMENT SYSTEM
+                                       ARCHITECTURE, WORKFLOW & MODULE SPECIFICATION
+========================================================================================================================
+
+PROJECT OVERVIEW:
+MediFlow is a real-time, multi-tenant capable, role-based Hospital & Inpatient Bed Management System designed to govern
+the end-to-end patient lifecycle: Registration, Triage & Queueing, Bed Allocation & Transfer, Clinical Consultations,
+Nursing Vitals & Medication Execution, Emergency Escalations, Inventory Tracking, Billing, and Automated Discharge.
+
+------------------------------------------------------------------------------------------------------------------------
+1. PROGRAMMING LANGUAGES & TECHNOLOGY STACK
+------------------------------------------------------------------------------------------------------------------------
+
+A. FRONTEND LAYER:
+   • Programming Language: JavaScript (ES6+ / JSX), HTML5, CSS3
+   • Framework & Bundler: React 19 + Vite
+   • Routing & Navigation: React Router DOM (v7, HashRouter)
+   • Styling & UI Engine: Tailwind CSS v4 + Material Symbols Icons & Glassmorphic Custom Theme
+   • HTTP Client: Axios with automatic JWT Authorization interceptors
+   • Alerting & Feedback: SweetAlert2 (Popups, Confirmation Dialogs, Toast Alerts)
+   • Reporting & Exports: jsPDF, jsPDF-AutoTable (Clinical Discharge Summaries & Invoices), XLSX (Excel Data Sheets)
+
+B. BACKEND API LAYER:
+   • Runtime: Node.js (v20+)
+   • Web Framework: Express.js (v5)
+   • Authentication & Cryptography: JSON Web Tokens (JWT) + Bcrypt.js (10-round salted password hashing)
+   • Database Driver & ORM: Mongoose (v9) & Official MongoDB Native Driver (v7)
+   • Environment Config: Dotenv
+
+C. DATABASE & INFRASTRUCTURE:
+   • Primary Database: MongoDB Atlas (Cloud NoSQL Document Database)
+   • Local / Memory Support: mongodb-memory-server (for isolated local testing)
+   • Architecture Pattern: RESTful API Micro-routing with Role-Based Access Control (RBAC) Middleware
+
+------------------------------------------------------------------------------------------------------------------------
+2. SYSTEM ARCHITECTURE & ROLE BOUNDARIES (RBAC)
+------------------------------------------------------------------------------------------------------------------------
+
+The application is structured into 4 strict clinical and administrative operational roles:
+
+1. 👑 HOSPITAL ADMINISTRATOR (Admin):
+   • Purpose: Central governance, system configuration, user provisioning, audit logs, and hospital metrics.
+   • Permissions: Full CRUD over Staff Accounts, Hospital Wards, Bed Inventory, Pricing, Analytics & Billing.
+
+2. 🩺 CONSULTING PHYSICIAN (Doctor):
+   • Purpose: Outpatient consultations, inpatient clinical reviews, diagnoses, prescriptions, and bed admission orders.
+   • Permissions: Access to assigned patients, vitals review, admission request creation, medical dossiers.
+
+3. 💉 STAFF NURSE (Nurse):
+   • Purpose: Floor bed monitoring, real-time vital loggings, doctor instructions execution, drug administration.
+   • Permissions: Inpatient observations, vitals charts, emergency alarms, bed transfer requests.
+
+4. 🏢 FRONT DESK & TRIAGE (Receptionist):
+   • Purpose: Patient intake/OPD registration, doctor appointment bookings, OPD queue management, check-in.
+   • Permissions: Patient registration, bed availability lookup, appointment scheduling, discharge assistance.
+
+------------------------------------------------------------------------------------------------------------------------
+3. END-TO-END PATIENT LIFECYCLE & CORE WORKFLOWS
+------------------------------------------------------------------------------------------------------------------------
+
+WORKFLOW 1: PATIENT REGISTRATION & OPD APPOINTMENT BOOKING
+1. Patient arrives at hospital reception or registers online.
+2. Receptionist opens "Patient Registration" / "Appointments Queue":
+   - Enters demographics: Name, Age, Gender, Contact, Blood Group, Medical Allergies.
+   - Generates unique Patient ID (e.g. `P10001` or `PM-445890`).
+3. Selects consulting doctor, department (e.g., Cardiology, General Medicine), and time slot.
+4. Patient is queued in MongoDB Appointments collection with status: `Scheduled` -> `Checked In` -> `Waiting`.
+
+WORKFLOW 2: CLINICAL CONSULTATION & ADMISSION BED REQUEST
+1. Doctor opens the "Appointments Queue" or "My Patients" view.
+2. Clicks on patient card to open the "Patient Medical Dossier" modal (views clinical history & past records).
+3. Changes appointment status to `In Consultation` and conducts examination.
+4. Doctor enters Clinical Notes:
+   - Diagnosis & Chief Complaint.
+   - Treatment Plan & Digital Prescriptions (Dosage, Frequency, Duration).
+5. IF PATIENT REQUIRES HOSPITALIZATION:
+   - Doctor creates an "Admission & Bed Request":
+     * Selects Ward Type (ICU, General Ward, Emergency, Oxygen Bed).
+     * Sets Urgency Priority (Routine, Urgent, Stat Critical).
+   - The request emits to the Bed Management Queue and triggers an automated notification to Nurses & Admins.
+6. Doctor finalizes consultation -> Status becomes `Completed` -> Saves to `MedicalRecord` collection.
+
+WORKFLOW 3: REAL-TIME BED OCCUPANCY, ADMISSION & WARD MONITORING
+1. Ward Nurse / Admin monitors "Bed Management Real-Time Status" dashboard.
+2. System displays interactive visual bed cards with color-coded status:
+   - 🟢 Available
+   - 🔴 Occupied (with patient badge & admission timestamp)
+   - 🟡 Cleaning / Sanitizing
+   - 🔵 Reserved
+   - 🟠 Under Maintenance
+3. Nurse reviews incoming Admission Bed Request -> Selects an available bed -> Confirms Assignment:
+   - Patient status switches to `Inpatient`.
+   - Bed status flips to `Occupied` with link to `patientId`.
+   - Real-time hospital metrics update across total available vs occupied counts.
+
+WORKFLOW 4: INPATIENT NURSING CARE, VITALS & MEDICATION TRACKING
+1. Nurse logs into Nurse Portal and sees assigned ward inpatients.
+2. Regular Vital Recording ("Patient Vitals" / "Nursing Observations"):
+   - Logs Heart Rate, Blood Pressure (Systolic/Diastolic), SpO2 %, Temperature, Respiratory Rate, and Consciousness (GCS).
+   - System auto-flags abnormal vitals (e.g. SpO2 < 90% triggers high alert badge).
+3. Doctor Instructions & Medication Administration:
+   - Doctor issues order in "Doctor Instructions".
+   - Nurse reviews pending medications and clicks "Administer Dose":
+     * Records exact timestamp, nurse ID, and clinical remarks.
+     * Prevents duplicate medication dosage.
+
+WORKFLOW 5: EMERGENCY TRIAGE & CRITICAL CARE ESCALATION
+1. Emergency patient arrives via Ambulance or critical inpatient deterioration occurs.
+2. Receptionist / Nurse opens "Emergency Management Rapid Response Center":
+   - Inputs Triage Category (Red - Immediate / Yellow - Urgent / Green - Standard).
+   - Triggers Emergency Critical Bed allocation (ICU / Ventilator).
+3. An emergency broadcast notification (`SystemNotificationsAlertsControl`) flashes across all active doctor & nurse dashboards.
+
+WORKFLOW 6: INVENTORY & MEDICAL RESOURCE ALLOCATION
+1. Departments monitor medical supplies (Oxygen Cylinders, Ventilators, Monitors, PPE).
+2. If stock drops below threshold (`lowStockThreshold`), item reflects as `Low Stock`.
+3. Clinical staff can raise "Resource Requests" -> Admin approves/allocates supplies directly from Admin Portal.
+
+WORKFLOW 7: TRANSFER, BILLING & AUTOMATED DISCHARGE
+1. Doctor marks patient as "Ready for Discharge" or orders a ward transfer.
+2. Receptionist / Admin reviews "Admin Billing & Discharge":
+   - System aggregates total bed stay duration x daily bed tariff.
+   - Calculates doctor consultation fees, pharmacy prescriptions, diagnostic tests, and taxes.
+   - Generates itemized `DischargeBill` with printable PDF invoice using jsPDF.
+3. Upon payment settlement:
+   - Patient status switches to `Discharged`.
+   - Bed automatically transitions to `Cleaning` status for sanitation.
+   - Once sanitized, bed status flips to `Available` for the next patient.
+
+------------------------------------------------------------------------------------------------------------------------
+4. COMPLETE MODULE MAP & FILE INVENTORY
+------------------------------------------------------------------------------------------------------------------------
+
+A. AUTHENTICATION & ACCESS CONTROL MODULE:
+   • Backend:
+     - `server/controllers/authController.js`: JWT token signing, bcrypt hashing, login & reset endpoints.
+     - `server/routes/authRoutes.js`: Login routes for Admin, Doctor, Nurse, Receptionist.
+     - `server/middleware/authMiddleware.js`: Bearer token validation and `requireRole` route guard.
+   • Frontend:
+     - `src/pages/admin/AdminLogin.jsx`: Secure administrator entrance.
+     - `src/pages/doctor/DoctorLogin.jsx`: Doctor portal login.
+     - `src/pages/nurse/NurseLogin.jsx`: Staff nurse portal login.
+     - `src/pages/receptionist/ReceptionistLogin.jsx`: Front desk entrance.
+     - `src/pages/Register.jsx`: Staff self-registration for Doctor, Nurse, Receptionist.
+     - `src/pages/ForgotPassword.jsx`: Secure multi-role password reset.
+
+B. ADMINISTRATOR MODULE:
+   • `src/pages/AdminDashboardMediFlowDesktop.jsx` & `Compact.jsx`: Central hospital KPIs, occupancy rates, fast actions.
+   • `src/pages/HospitalSystemFRSSummary.jsx`: Functional Requirements Specification & high-level system compliance.
+   • `src/pages/admin/AdminUserAccessManagement.jsx`: Staff directory, provision new accounts, activate/deactivate accounts.
+   • `src/pages/admin/AdminBillingDischarge.jsx`: Discharge audit, automated invoicing, revenue analytics.
+   • `src/pages/admin/AdminSettings.jsx` & `AdminProfile.jsx`: Hospital ward configurations, bed rates, system parameters.
+   • `src/pages/SystemAnalyticsReports.jsx`: Visual graphs of occupancy trends, admission velocity, patient turnover.
+
+C. DOCTOR MODULE:
+   • `src/pages/doctor/DoctorDashboard.jsx`: Doctor's daily roster, waiting queue, active inpatients, urgent alerts.
+   • `src/pages/AppointmentsAdmissionsQueue.jsx`: OPD queue, consultation drawer, Patient Medical Dossier popup.
+   • `src/pages/MyPatientsMediFlow.jsx`: Comprehensive medical history, diagnostic timeline, active treatments.
+   • `src/pages/doctor/DoctorPrescriptions.jsx`: Digital prescription pad with dosage, frequency, and pharmacy sync.
+   • `src/pages/doctor/DoctorPatientVitals.jsx`: Inpatient vital history charts and clinical threshold monitoring.
+   • `src/pages/doctor/DoctorAdmissionBedRequests.jsx`: Inpatient admission orders requesting ICU/General beds.
+   • `src/pages/doctor/DoctorEmergencyPatients.jsx`: Rapid review of emergency admissions and red-tag triage.
+   • `src/pages/doctor/DoctorTransferDischarge.jsx`: Bed transfer orders and discharge clearance.
+
+D. NURSE MODULE:
+   • `src/pages/nurse/NurseDashboard.jsx`: Floor overview, shift schedule, bed occupancy, pending nursing tasks.
+   • `src/pages/nurse/NurseBedPatientMonitoring.jsx`: Live bed status with patient vitals badges.
+   • `src/pages/nurse/NursingObservations.jsx`: Real-time entry of BP, Pulse, SpO2, Temperature, Pain Scale.
+   • `src/pages/nurse/NurseMedicationTreatment.jsx`: MAR (Medication Administration Record) drug schedule execution.
+   • `src/pages/nurse/NurseDoctorInstructions.jsx`: Doctor orders checklist with acknowledgment timestamps.
+   • `src/pages/nurse/NurseEmergencyCriticalCare.jsx`: Emergency code activation and critical care monitoring.
+   • `src/pages/nurse/NurseTransferDischarge.jsx`: Ward transfer execution and bed turnover preparation.
+
+E. RECEPTIONIST MODULE:
+   • `src/pages/receptionist/ReceptionistDashboard.jsx`: Front desk overview, today's appointments, check-ins.
+   • `src/pages/PatientRegistrationMediFlow.jsx`: New patient onboarding and OPD registration.
+   • `src/pages/receptionist/ReceptionistPatientSearch.jsx` & `PatientDetails.jsx`: Global patient database search.
+   • `src/pages/receptionist/ReceptionistCheckIn.jsx`: Token allocation and queue progression.
+   • `src/pages/receptionist/ReceptionistBedAvailability.jsx`: Live bed availability lookup for inquiries.
+   • `src/pages/receptionist/ReceptionistDoctorAvailability.jsx`: Doctor shift schedules and department availability.
+   • `src/pages/receptionist/ReceptionistEmergencyRegistration.jsx`: Quick ambulance & emergency intake.
+   • `src/pages/receptionist/ReceptionistDischargeAssistance.jsx`: Patient departure checkout assistance.
+
+F. HOSPITAL-WIDE CORE ENGINES:
+   • `src/pages/BedManagementRealTimeStatus.jsx`: Live interactive 2D ward/bed grid with color status and filter matrix.
+   • `src/pages/ResourceAllocationMediFlowCentral.jsx`: Hospital equipment, ventilator & oxygen inventory tracking.
+   • `src/pages/EmergencyManagementRapidResponseCenter.jsx`: Rapid triage, ambulance intake, and critical alerts.
+   • `src/pages/SystemNotificationsAlertsControl.jsx`: Real-time system broadcast messages and priority warnings.
+
+------------------------------------------------------------------------------------------------------------------------
+5. MONGODB DATABASE COLLECTIONS & SCHEMAS
+------------------------------------------------------------------------------------------------------------------------
+• `admins`: Administrator profiles, credentials, access levels.
+• `doctors`: Physician details, department, specialization, cabin, duty schedules.
+• `nurses`: Nurse details, assigned wards, shift hours, on-duty availability.
+• `receptionists`: Front desk staff details, desk location, shift timings.
+• `patients`: Demographic info, medical record number (MRN), blood group, contact, current status.
+• `beds`: Bed numbers, ward categories, occupancy state (Available/Occupied/Cleaning), tariffs.
+• `appointments`: Scheduled consultations, appointment dates, queue statuses, consultation notes.
+• `medicalrecords`: Historical clinical diagnoses, treatment history, doctors' remarks.
+• `prescriptions`: Medication names, dosages, frequencies, doctor signatures.
+• `vitallogs`: Chronological BP, SpO2, pulse, and temperature logs with patient references.
+• `doctorinstructions`: Formal clinical orders issued from doctors to nurses.
+• `medicationadministrations`: Actual timestamps and nurse validations of drug administration.
+• `nursingobservations`: Inpatient nurse shift observations and notes.
+• `admissionbedrequests`: Formal bed requisition orders sent from doctors to bed management.
+• `transferdischarges`: Bed transfer history, transfer reasons, and discharge clearances.
+• `dischargebills`: Itemized billing invoices, room tariffs, pharmacy costs, payment statuses.
+• `inventoryitems`: Hospital equipment and pharmaceuticals stock levels and thresholds.
+• `resourcerequests`: Requisitions for specialized medical gear (ventilators, oxygen tanks).
+• `notifications`: Multi-role priority alerts (Routine, Urgent, Emergency).
+
+========================================================================================================================
+                                                END OF SPECIFICATION
+========================================================================================================================

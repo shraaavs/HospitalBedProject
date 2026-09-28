@@ -13,7 +13,7 @@ const bedAllocationSchema = new mongoose.Schema({
   },
   allocatedBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'Receptionist',
     required: true
   },
   startTime: {

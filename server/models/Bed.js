@@ -8,12 +8,24 @@ const bedSchema = new mongoose.Schema({
   },
   wardType: {
     type: String,
-    enum: ['ICU', 'General', 'Surgery'],
+    enum: ['ICU', 'General', 'Special', 'Surgery', 'Pediatric', 'Emergency', 'Isolation', 'Maternity', 'HDU', 'Other'],
     required: true,
+  },
+  department: {
+    type: String,
+    default: 'General Medicine'
+  },
+  type: {
+    type: String,
+    default: null
+  },
+  dailyRate: {
+    type: Number,
+    default: null
   },
   status: {
     type: String,
-    enum: ['Available', 'Occupied', 'Cleaning', 'Reserved', 'Maintenance'],
+    enum: ['Available', 'Occupied', 'Cleaning', 'Reserved', 'Maintenance', 'Blocked'],
     default: 'Available'
   },
   floor: {
@@ -26,9 +38,10 @@ const bedSchema = new mongoose.Schema({
   },
   bedType: {
     type: String,
-    enum: ['Standard', 'Motorized', 'Bariatric', 'Pediatric', 'Other'],
+    enum: ['Standard', 'Motorized', 'Bariatric', 'Pediatric', 'ICU', 'Other'],
     default: 'Standard'
   },
+
   patientName: {
     type: String,
     default: null,

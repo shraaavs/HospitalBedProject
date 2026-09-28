@@ -13,7 +13,7 @@ const bedReservationSchema = new mongoose.Schema({
   },
   reservedBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'Receptionist',
     required: true
   },
   reservationDate: {

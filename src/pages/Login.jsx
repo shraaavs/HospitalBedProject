@@ -21,18 +21,41 @@ export default function Login() {
     const main = document.querySelector('main');
     if (main) {
       console.log('MAIN_OUTER_HTML:', main.outerHTML);
-      const style = window.getComputedStyle(main);
-      console.log('MAIN_COMPUTED_STYLE:', JSON.stringify({
-        width: style.width,
-        height: style.height,
-        margin: style.margin,
-        display: style.display
-      }));
-    } else {
-      console.log('MAIN_NOT_FOUND');
     }
   }, []);
 
+  const handleLoginSuccess = (data) => {
+    const role = data.role || data.user?.role || 'Admin';
+    const token = data.token;
+    const name = data.name || data.user?.name;
+    const email = data.email || data.user?.email;
+
+    localStorage.setItem('userToken', token);
+    localStorage.setItem('token', token);
+    localStorage.setItem('userRole', role);
+    if (email) localStorage.setItem('userEmail', email);
+    if (name) localStorage.setItem('userName', name);
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Login Successful',
+      text: `Welcome back, ${name || role}!`,
+      timer: 1500,
+      showConfirmButton: false,
+    }).then(() => {
+      if (role === 'Admin') {
+        navigate('/dashboard');
+      } else if (role === 'Nurse') {
+        navigate('/dashboard');
+      } else if (role === 'Doctor') {
+        navigate('/dashboard');
+      } else if (role === 'Receptionist') {
+        navigate('/receptionist/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -42,7 +65,7 @@ export default function Login() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: staffId,
+          username: staffId,
           password: password,
           role: selectedRole || undefined
         })
@@ -59,30 +82,7 @@ export default function Login() {
       }
       
       if (response.ok) {
-        localStorage.setItem('userToken', data.token);
-        localStorage.setItem('userRole', data.user.role);
-        localStorage.setItem('userEmail', data.user.email);
-        localStorage.setItem('userName', data.user.name);
-        
-        Swal.fire({
-          icon: 'success',
-          title: 'Login Successful',
-          text: 'Welcome to MediFlow Central!',
-          timer: 1500,
-          showConfirmButton: false,
-        }).then(() => {
-          if (data.user.role === 'Admin') {
-            navigate('/admin');
-          } else if (data.user.role === 'Nurse') {
-            navigate('/beds');
-          } else if (data.user.role === 'Doctor') {
-            navigate('/appointments');
-          } else if (data.user.role === 'Receptionist') {
-            navigate('/registration');
-          } else {
-            navigate('/dashboard');
-          }
-        });
+        handleLoginSuccess(data);
       } else {
         Swal.fire({
           icon: 'error',
@@ -102,28 +102,44 @@ export default function Login() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 overflow-hidden relative">
-      {/* Full-screen Background Image with Simple Overlay */}
+      {/* Full-screen Hospital Bed Background Image with Gradient Overlay */}
       <div className="absolute inset-0 z-0">
         <div 
-          className="bg-cover bg-center w-full h-full transform scale-105"
-          style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBBv8s25q_jkkjsQnwruX8Em8pZUR9vMPQyijYoawmQKnl4tEV1YRgTNhMz4L3jqu65QdGEO1ObbpHWiOmKfBAWM810oWIHZEGIPn1zH1cbcn-enaQXm207aBC3eTp60D-VlDdsNryUMEE2WeVzZa7YRAWh-AvX8mH6NyYhEaoQXrRBq-sMo987jU3lFSmiR_CG9ongLl2qHUmOav_vrQV2pCnRF4aNmAhgGSfd_1F3WO40xzrqpuQfGNHiQvrZ_MS8933_aZhueojD')" }}
+          className="bg-cover bg-center w-full h-full transform scale-105 transition-transform duration-1000"
+          style={{ 
+            backgroundImage: "url('https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=2000&q=80')" 
+          }}
         ></div>
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950/85 via-primary/65 to-slate-900/85 backdrop-blur-[4px]"></div>
       </div>
       
       {/* Header: MediFlow Branding */}
-      <header className="absolute top-0 left-0 w-full p-6 lg:p-8 z-20 flex items-center justify-center lg:justify-start gap-3">
-        <span className="material-symbols-outlined text-[40px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>health_metrics</span>
-        <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-white drop-shadow-md">MediFlow</h1>
+      <header className="absolute top-0 left-0 w-full p-6 lg:p-8 z-20 flex items-center justify-between">
+        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
+          <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-lg">
+            <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>health_metrics</span>
+          </div>
+          <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-white drop-shadow-md">MediFlow</h1>
+        </div>
+        <button 
+          onClick={() => navigate('/')} 
+          className="text-xs font-semibold text-white/80 hover:text-white bg-white/10 hover:bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/15 transition-all flex items-center gap-1.5 cursor-pointer"
+        >
+          <span className="material-symbols-outlined text-sm">arrow_back</span>
+          Home
+        </button>
       </header>
       
-      <main className="relative z-10 w-full max-w-[480px] animate-slide-up mt-8 lg:mt-0">
+      <main className="relative z-10 w-full max-w-[480px] animate-slide-up mt-12 lg:mt-6">
         {/* Glassmorphism Login Form */}
-        <section className="w-full bg-surface-container-lowest/95 backdrop-blur-2xl p-6 md:p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] rounded-3xl border border-white/20">
+        <section className="w-full bg-white/95 dark:bg-surface-container-lowest/95 backdrop-blur-2xl p-6 md:p-8 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] rounded-3xl border border-white/40 dark:border-white/10">
           <div className="w-full">
-            <header className="mb-4 text-center">
-              <h2 className="text-3xl font-bold text-on-surface mb-2">Welcome back</h2>
-              <p className="text-on-surface-variant">Please enter your credentials or select a role.</p>
+            <header className="mb-5 text-center">
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-primary to-primary-container text-white flex items-center justify-center mb-3 shadow-lg shadow-primary/30 ring-4 ring-primary/10">
+                <span className="material-symbols-outlined text-[28px]">lock_person</span>
+              </div>
+              <h2 className="text-2xl font-bold text-on-surface tracking-tight">Staff Portal Login</h2>
+              <p className="text-xs font-medium text-on-surface-variant mt-1">Select your department role or enter staff credentials</p>
             </header>
 
             {/* Role Quick Select Options */}

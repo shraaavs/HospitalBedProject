@@ -22,7 +22,7 @@ const nursingTaskSchema = new mongoose.Schema({
   },
   assignedTo: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'Nurse',
     default: null
   },
   dueDate: {

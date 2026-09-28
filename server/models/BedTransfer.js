@@ -22,7 +22,7 @@ const bedTransferSchema = new mongoose.Schema({
   },
   requestedBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'Admin',
     required: true
   },
   transferDate: {

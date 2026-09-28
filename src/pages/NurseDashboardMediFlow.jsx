@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 export default function NurseDashboardMediFlow() {
   const [stats, setStats] = useState(null);
+  const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -9,16 +10,22 @@ export default function NurseDashboardMediFlow() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await fetch('http://localhost:5000/api/dashboard/nurse', {
+        const token = localStorage.getItem('userToken') || localStorage.getItem('token');
+        const res = await fetch('/api/dashboard/nurse', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const tasksRes = await fetch('/api/nursing-tasks', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
         const data = await res.json();
         
-        if (res.ok) {
+        if (res.ok && tasksRes.ok) {
           setStats(data);
+          setTasks(await tasksRes.json());
         } else {
           setError(data.message || 'Failed to fetch dashboard data');
         }
@@ -87,10 +94,10 @@ export default function NurseDashboardMediFlow() {
         
         {/* KPI Grid */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-md">
-          {/* Card: Assigned Patients */}
+          {/* Card: Patients */}
           <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-lg shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
             <div className="flex justify-between items-start z-10 relative">
-              <span className="text-on-surface-variant font-label-md uppercase tracking-wider">Assigned Patients</span>
+              <span className="text-on-surface-variant font-label-md uppercase tracking-wider">Patients</span>
               <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                 <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>groups</span>
               </div>
@@ -183,7 +190,7 @@ export default function NurseDashboardMediFlow() {
           </div>
         </section>
         
-        {/* Quick Actions / Activity Feed Placeholder */}
+        {/* Dynamic Task Feed */}
         <section className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-lg shadow-sm">
           <div className="flex justify-between items-center mb-md">
             <h3 className="font-headline-md text-on-surface">Recent Task Activity</h3>
@@ -191,37 +198,57 @@ export default function NurseDashboardMediFlow() {
           </div>
           
           <div className="space-y-sm">
-            <div className="p-md rounded-xl bg-surface-container border border-outline-variant flex justify-between items-center">
-              <div className="flex items-center gap-md">
-                <span className="material-symbols-outlined text-green-600">check_circle</span>
-                <div>
-                  <p className="font-bold text-body-md text-on-surface">Administered antibiotics to Patient #PT-103</p>
-                  <p className="text-body-sm text-on-surface-variant">2 mins ago</p>
-                </div>
-              </div>
-              <button className="px-md py-xs bg-surface-container-lowest text-on-surface border border-outline-variant rounded-lg text-label-md hover:bg-surface-variant">Undo</button>
-            </div>
-            
-            <div className="p-md rounded-xl bg-surface-container border border-outline-variant flex justify-between items-center">
-               <div className="flex items-center gap-md">
-                <span className="material-symbols-outlined text-tertiary">monitor_heart</span>
-                <div>
-                  <p className="font-bold text-body-md text-on-surface">Vitals recorded for Patient #PT-092 (ICU)</p>
-                  <p className="text-body-sm text-on-surface-variant">15 mins ago</p>
-                </div>
-              </div>
-              <button className="px-md py-xs bg-surface-container-lowest text-on-surface border border-outline-variant rounded-lg text-label-md hover:bg-surface-variant">Edit</button>
-            </div>
-            
-            <div className="p-md rounded-xl bg-surface-container border border-outline-variant flex justify-between items-center opacity-70">
-               <div className="flex items-center gap-md">
-                <span className="material-symbols-outlined text-outline">inventory_2</span>
-                <div>
-                  <p className="font-bold text-body-md text-on-surface">Received Oxygen cylinder from Inventory</p>
-                  <p className="text-body-sm text-on-surface-variant">1 hour ago</p>
-                </div>
-              </div>
-            </div>
+            {tasks.length === 0 ? (
+                <p className="text-body-md text-on-surface-variant italic">No pending tasks.</p>
+            ) : (
+                tasks.map(task => (
+                    <div key={task._id} className={`p-md rounded-xl bg-surface-container border border-outline-variant flex justify-between items-center ${task.status === 'Completed' ? 'opacity-70' : ''}`}>
+                      <div className="flex items-center gap-md">
+                        <span className={`material-symbols-outlined ${task.status === 'Completed' ? 'text-green-600' : task.taskType === 'Vitals' ? 'text-tertiary' : 'text-primary'}`}>
+                            {task.status === 'Completed' ? 'check_circle' : task.taskType === 'Vitals' ? 'monitor_heart' : 'assignment'}
+                        </span>
+                        <div>
+                          <p className="font-bold text-body-md text-on-surface">
+                              {task.taskType}: {task.description}
+                          </p>
+                          <p className="text-body-sm text-on-surface-variant">
+                              Patient: {task.patient ? task.patient.fullName : 'Unknown'} • {task.status}
+                          </p>
+                        </div>
+                      </div>
+                      {task.status !== 'Completed' && (
+                          <button 
+                              onClick={async () => {
+                                  try {
+                                      const token = localStorage.getItem('userToken') || localStorage.getItem('token');
+                                      const res = await fetch(`/api/nursing-tasks/${task._id}/complete`, {
+                                          method: 'PUT',
+                                          headers: { 'Authorization': `Bearer ${token}` }
+                                      });
+                                      if (res.ok) {
+                                          // Refresh data immediately
+                                          const fetchStats = async () => {
+                                            const dbRes = await fetch('/api/dashboard/nurse', { headers: { 'Authorization': `Bearer ${token}` } });
+                                            const tasksRes = await fetch('/api/nursing-tasks', { headers: { 'Authorization': `Bearer ${token}` } });
+                                            if (dbRes.ok && tasksRes.ok) {
+                                              setStats(await dbRes.json());
+                                              setTasks(await tasksRes.json());
+                                            }
+                                          };
+                                          fetchStats();
+                                      }
+                                  } catch (err) {
+                                      console.error(err);
+                                  }
+                              }}
+                              className="px-md py-xs bg-primary text-on-primary border border-transparent rounded-lg text-label-md shadow-sm hover:brightness-110 transition-all"
+                          >
+                              Complete
+                          </button>
+                      )}
+                    </div>
+                ))
+            )}
           </div>
         </section>
         

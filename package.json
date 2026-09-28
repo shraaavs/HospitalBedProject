@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"vite\"",
-    "server": "node server/index.js",
+    "server": "node --watch-path=server server/index.js",
     "start": "vite",
     "build": "vite build",
     "lint": "oxlint",
@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.2",
+    "axios": "^1.20.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
@@ -24,9 +25,12 @@
     "mongodb": "^7.4.0",
     "mongodb-memory-server": "^11.2.0",
     "mongoose": "^9.7.4",
+    "nodemailer": "^10.0.9",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.1",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "sweetalert2": "^11.26.25",
     "tailwindcss": "^4.3.2",
     "xlsx": "^0.18.5"
